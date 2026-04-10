@@ -40,20 +40,51 @@
             transform: translate(-50%, -50%);
             width: 80%;
             text-align: center;
-            background: transparent; /* No background */
+            background: transparent; 
             padding: 20px;
         }
 
         #story-text {
             font-size: 1.6rem;
             line-height: 1.6;
-            /* Heavy text shadow makes it readable over any background */
             text-shadow: 2px 2px 4px #000, 0 0 15px #000, 0 0 25px #000;
         }
 
         /* Blinking Cursor for Typewriter */
         .cursor { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+        /* --- NEW: Skip Indicator Styles --- */
+        #skip-indicator {
+            position: absolute;
+            bottom: 30px;
+            right: 40px;
+            font-size: 1.2rem;
+            color: #fff;
+            opacity: 0; /* Starts hidden */
+            cursor: pointer;
+            user-select: none; /* Prevents text highlighting when holding */
+            animation: introduceSkip 5s ease-in-out 2s forwards; /* 5s animation, 2s delay */
+            transition: text-shadow 1.5s linear, color 1.5s linear; /* Smooth hold effect */
+        }
+
+        /* 3 slow blinks, then settles at 30% opacity */
+        @keyframes introduceSkip {
+            0% { opacity: 0; }
+            15% { opacity: 0.8; }
+            30% { opacity: 0; }
+            45% { opacity: 0.8; }
+            60% { opacity: 0; }
+            75% { opacity: 0.8; }
+            100% { opacity: 0.3; } 
+        }
+
+        /* Class added via JS when the player is holding the button */
+        #skip-indicator.holding {
+            opacity: 1 !important; /* Overrides the faded state */
+            color: #fff;
+            text-shadow: 0 0 15px #fff, 0 0 30px #fff; /* Glows while holding */
+        }
     </style>
 </head>
 <body>
@@ -65,6 +96,8 @@
         <div id="text-box">
             <p id="story-text"><span id="typewriter"></span><span class="cursor">|</span></p>
         </div>
+
+        <div id="skip-indicator">Hold to Skip</div>
     </div>
 
     <script>
@@ -100,7 +133,6 @@
         }
         setInterval(changeImage, 6000); 
 
-
         // --- 2. Segmented Typewriter Logic ---
         const storyParts = [
             "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows.",
@@ -120,9 +152,8 @@
                 if (charIndex < currentText.length) {
                     typewriterElement.innerHTML += currentText.charAt(charIndex);
                     charIndex++;
-                    setTimeout(typeWriter, Math.random() * 30 + 20); // Typing speed
+                    setTimeout(typeWriter, Math.random() * 30 + 20); 
                 } else {
-                    // Finished current sentence. Wait 3 seconds, then clear and start next part.
                     setTimeout(() => {
                         typewriterElement.innerHTML = '';
                         charIndex = 0;
@@ -131,15 +162,41 @@
                     }, 3000); 
                 }
             } else {
-                // Finished ALL parts. Transition to title screen.
                 setTimeout(() => {
                     window.location.href = 'title.html';
                 }, 1000);
             }
         }
-
-        // Start typing after a 1-second delay
         setTimeout(typeWriter, 1000);
+
+        // --- 3. NEW: Hold-to-Skip Logic ---
+        const skipBtn = document.getElementById('skip-indicator');
+        let skipTimer;
+        const holdTimeToSkip = 1500; // 1.5 seconds
+
+        function startSkip(e) {
+            e.preventDefault(); // Prevents weird mobile behaviors
+            skipBtn.classList.add('holding');
+            
+            // Start the timer to redirect
+            skipTimer = setTimeout(() => {
+                window.location.href = 'title.html';
+            }, holdTimeToSkip);
+        }
+
+        function cancelSkip() {
+            skipBtn.classList.remove('holding');
+            // If they let go early, cancel the redirect timer
+            clearTimeout(skipTimer);
+        }
+
+        // Mouse Events (Desktop)
+        skipBtn.addEventListener('mousedown', startSkip);
+        window.addEventListener('mouseup', cancelSkip); 
+        
+        // Touch Events (Mobile support)
+        skipBtn.addEventListener('touchstart', startSkip);
+        window.addEventListener('touchend', cancelSkip);
     </script>
 
 </body>
