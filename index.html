@@ -20,34 +20,35 @@
             background-size: cover;
             background-position: center;
             opacity: 0;
-            transition: opacity 3s ease-in-out; /* 3-second fade */
+            transition: opacity 3s ease-in-out;
             transform: scale(1);
-            animation: slowZoom 20s linear infinite alternate; /* Creepy slow zoom */
+            animation: slowZoom 20s linear infinite alternate;
         }
 
-        /* Active class triggers the fade-in */
-        .bg-image.active { opacity: 0.6; /* Kept dark for horror atmosphere */ }
+        .bg-image.active { opacity: 0.6; }
 
         @keyframes slowZoom {
             0% { transform: scale(1); }
             100% { transform: scale(1.1); }
         }
 
-        /* Bottom Text Box */
+        /* Center Transparent Text Box */
         #text-box {
             position: absolute;
-            bottom: 5%; left: 10%; right: 10%;
-            background: rgba(0, 0, 0, 0.85); /* Dark, semi-transparent background */
-            border: 1px solid #444;
+            top: 50%; 
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            text-align: center;
+            background: transparent; /* No background */
             padding: 20px;
-            min-height: 150px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.9);
         }
 
         #story-text {
-            font-size: 1.2rem;
-            line-height: 1.5;
-            text-shadow: 1px 1px 2px #000;
+            font-size: 1.6rem;
+            line-height: 1.6;
+            /* Heavy text shadow makes it readable over any background */
+            text-shadow: 2px 2px 4px #000, 0 0 15px #000, 0 0 25px #000;
         }
 
         /* Blinking Cursor for Typewriter */
@@ -68,11 +69,10 @@
 
     <script>
         // --- 1. Image Fading Logic ---
-        // Pointing directly to your main folder setup
         const images = [
-            'StoryScenes/Tehran.jpg', // Irun war
-            'StoryScenes/SE3EN.jpg',  // Broken White house 1
-            'StoryScenes/uNk5K.jpg'   // Broken White house 2
+            'StoryScenes/Tehran.jpg', 
+            'StoryScenes/SE3EN.jpg',  
+            'StoryScenes/uNk5K.jpg'   
         ];
         
         let currentImageIndex = 0;
@@ -80,7 +80,6 @@
         const layer2 = document.getElementById('layer2');
         let activeLayer = 1;
 
-        // Set initial image
         layer1.style.backgroundImage = `url('${images[0]}')`;
 
         function changeImage() {
@@ -99,38 +98,43 @@
                 activeLayer = 1;
             }
         }
-
-        // Change image every 6 seconds
         setInterval(changeImage, 6000); 
 
 
-        // --- 2. Typewriter Text & Transition Logic ---
-        const introText = "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows. Spread across the mahogany desk are the crushing burdens of a besieged presidency: a stack of urgent deportation orders and a tactical terminal demanding missile strikes against Irun. But the true nightmare prowls just outside the thick oak doors. The Liberalist Virus of 2022 has mutated Elong Must and Charrlie Hirk from trusted allies into corrupted, cybernetic husks. Now, they drag themselves through the velvet-lined corridors of the West Wing, hunting for the last uninfected mind to consume.\n\nAs the overhead light dies, the only lifeline is a heavy, hand-cranked generator beneath the desk that buys just ninety seconds of power. Keeping the security doors locked means plunging into total vulnerability—grinding the cold iron gears blindly in the dark for fifteen agonizing seconds, unable to work or watch the monitors, while a distorted, unnatural giggle echoes closer down the hall.";
+        // --- 2. Segmented Typewriter Logic ---
+        const storyParts = [
+            "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows.",
+            "Spread across the mahogany desk are the crushing burdens of a besieged presidency: a stack of urgent deportation orders and a tactical terminal demanding missile strikes against Irun.",
+            "But the true nightmare prowls just outside the thick oak doors. The Liberalist Virus of 2022 has mutated Elong Must and Charrlie Hirk from trusted allies into corrupted, cybernetic husks.",
+            "Now, they drag themselves through the velvet-lined corridors of the West Wing, hunting for the last uninfected mind to consume."
+        ];
 
         const typewriterElement = document.getElementById('typewriter');
+        let currentPart = 0;
         let charIndex = 0;
-        let isTransitioning = false; // Prevents the redirect from firing multiple times
 
         function typeWriter() {
-            if (charIndex < introText.length) {
-                // Handle line breaks properly
-                if (introText.charAt(charIndex) === '\n') {
-                    typewriterElement.innerHTML += '<br>';
+            if (currentPart < storyParts.length) {
+                let currentText = storyParts[currentPart];
+                
+                if (charIndex < currentText.length) {
+                    typewriterElement.innerHTML += currentText.charAt(charIndex);
+                    charIndex++;
+                    setTimeout(typeWriter, Math.random() * 30 + 20); // Typing speed
                 } else {
-                    typewriterElement.innerHTML += introText.charAt(charIndex);
+                    // Finished current sentence. Wait 3 seconds, then clear and start next part.
+                    setTimeout(() => {
+                        typewriterElement.innerHTML = '';
+                        charIndex = 0;
+                        currentPart++;
+                        typeWriter();
+                    }, 3000); 
                 }
-                charIndex++;
-                
-                // Randomize typing speed slightly for realism (between 20ms and 50ms)
-                setTimeout(typeWriter, Math.random() * 30 + 20);
-            } else if (!isTransitioning) {
-                // TEXT IS FINISHED TYPING. 
-                isTransitioning = true;
-                
-                // Wait 4 seconds for the player to read the end, then open title.html
+            } else {
+                // Finished ALL parts. Transition to title screen.
                 setTimeout(() => {
                     window.location.href = 'title.html';
-                }, 4000); 
+                }, 1000);
             }
         }
 
