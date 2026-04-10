@@ -1,1 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story Intro - Five Nights at the Black House</title>
+    <style>
+        /* CSS Reset & Basic Setup */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: #000; color: #fff; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
 
+        /* Fullscreen Image Container */
+        #intro-container { position: relative; width: 100vw; height: 100vh; }
+
+        /* Image Layers for Crossfading */
+        .bg-image {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 3s ease-in-out; /* 3-second fade */
+            transform: scale(1);
+            animation: slowZoom 20s linear infinite alternate; /* Creepy slow zoom */
+        }
+
+        /* Active class triggers the fade-in */
+        .bg-image.active { opacity: 0.6; /* Kept dark for horror atmosphere */ }
+
+        @keyframes slowZoom {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* Bottom Text Box */
+        #text-box {
+            position: absolute;
+            bottom: 5%; left: 10%; right: 10%;
+            background: rgba(0, 0, 0, 0.85); /* Dark, semi-transparent background */
+            border: 1px solid #444;
+            padding: 20px;
+            min-height: 150px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.9);
+        }
+
+        #story-text {
+            font-size: 1.2rem;
+            line-height: 1.5;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        /* Blinking Cursor for Typewriter */
+        .cursor { animation: blink 1s infinite; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    </style>
+</head>
+<body>
+
+    <div id="intro-container">
+        <div id="layer1" class="bg-image active"></div>
+        <div id="layer2" class="bg-image"></div>
+        
+        <div id="text-box">
+            <p id="story-text"><span id="typewriter"></span><span class="cursor">|</span></p>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Image Fading Logic ---
+        // Pointing directly to your main folder setup
+        const images = [
+            'StoryScenes/Tehran.jpg', // Irun war
+            'StoryScenes/SE3EN.jpg',  // Broken White house 1
+            'StoryScenes/uNk5K.jpg'   // Broken White house 2
+        ];
+        
+        let currentImageIndex = 0;
+        const layer1 = document.getElementById('layer1');
+        const layer2 = document.getElementById('layer2');
+        let activeLayer = 1;
+
+        // Set initial image
+        layer1.style.backgroundImage = `url('${images[0]}')`;
+
+        function changeImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            const nextImage = `url('${images[currentImageIndex]}')`;
+
+            if (activeLayer === 1) {
+                layer2.style.backgroundImage = nextImage;
+                layer2.classList.add('active');
+                layer1.classList.remove('active');
+                activeLayer = 2;
+            } else {
+                layer1.style.backgroundImage = nextImage;
+                layer1.classList.add('active');
+                layer2.classList.remove('active');
+                activeLayer = 1;
+            }
+        }
+
+        // Change image every 6 seconds
+        setInterval(changeImage, 6000); 
+
+
+        // --- 2. Typewriter Text & Transition Logic ---
+        const introText = "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows. Spread across the mahogany desk are the crushing burdens of a besieged presidency: a stack of urgent deportation orders and a tactical terminal demanding missile strikes against Irun. But the true nightmare prowls just outside the thick oak doors. The Liberalist Virus of 2022 has mutated Elong Must and Charrlie Hirk from trusted allies into corrupted, cybernetic husks. Now, they drag themselves through the velvet-lined corridors of the West Wing, hunting for the last uninfected mind to consume.\n\nAs the overhead light dies, the only lifeline is a heavy, hand-cranked generator beneath the desk that buys just ninety seconds of power. Keeping the security doors locked means plunging into total vulnerability—grinding the cold iron gears blindly in the dark for fifteen agonizing seconds, unable to work or watch the monitors, while a distorted, unnatural giggle echoes closer down the hall.";
+
+        const typewriterElement = document.getElementById('typewriter');
+        let charIndex = 0;
+        let isTransitioning = false; // Prevents the redirect from firing multiple times
+
+        function typeWriter() {
+            if (charIndex < introText.length) {
+                // Handle line breaks properly
+                if (introText.charAt(charIndex) === '\n') {
+                    typewriterElement.innerHTML += '<br>';
+                } else {
+                    typewriterElement.innerHTML += introText.charAt(charIndex);
+                }
+                charIndex++;
+                
+                // Randomize typing speed slightly for realism (between 20ms and 50ms)
+                setTimeout(typeWriter, Math.random() * 30 + 20);
+            } else if (!isTransitioning) {
+                // TEXT IS FINISHED TYPING. 
+                isTransitioning = true;
+                
+                // Wait 4 seconds for the player to read the end, then open title.html
+                setTimeout(() => {
+                    window.location.href = 'title.html';
+                }, 4000); 
+            }
+        }
+
+        // Start typing after a 1-second delay
+        setTimeout(typeWriter, 1000);
+    </script>
+
+</body>
+</html>
