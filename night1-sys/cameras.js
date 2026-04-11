@@ -2,8 +2,7 @@
 
 const cameraNav = document.getElementById('camera-nav');
 const cameraFeed = document.getElementById('camera-feed');
-const charrlieSprite = document.getElementById('charrlie-sprite');
-const elongSprite = document.getElementById('elong-sprite');
+const elongSprite = document.getElementById('elong-sprite'); // Charrlie removed
 
 const camUIMonitor = document.getElementById('camera-monitor');
 const camUILeftPanel = document.getElementById('left-panel');
@@ -109,12 +108,6 @@ function switchCamera(roomName, playAudio = true) {
         elongSprite.style.display = 'block';
     } else {
         elongSprite.style.display = 'none';
-    }
-
-    if (window.aiPositions && window.aiPositions.charrlie === roomName) {
-        charrlieSprite.style.display = 'block';
-    } else {
-        charrlieSprite.style.display = 'none';
     }
 }
 
