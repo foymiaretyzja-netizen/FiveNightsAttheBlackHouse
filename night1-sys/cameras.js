@@ -69,7 +69,20 @@ window.triggerFlicker = function() {
 };
 
 // Global long flicker (for AI Movement)
-window.triggerLongFlicker = function() {
+window.triggerLongFlicker = function(oldRoom, newRoom) {
+    // 1. If camera monitor is closed, do nothing (no sound, no flash)
+    if (!window.isCameraOpen) return;
+
+    // 2. If rooms are passed, ONLY trigger if the player is looking at the room the AI left, or the room it entered
+    if (oldRoom && newRoom) {
+        if (currentCamera !== oldRoom && currentCamera !== newRoom) {
+            return; // Player is looking at a different room
+        }
+    }
+
+    // 3. Play the static noise and trigger the flash effect
+    playCameraSound();
+
     const flash = document.getElementById('static-flash');
     if (!flash) return;
     
