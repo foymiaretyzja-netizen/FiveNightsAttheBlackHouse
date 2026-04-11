@@ -23,8 +23,8 @@
             background-size: cover;
             background-position: center;
             opacity: 0; /* Starts hidden for fade-in */
-            /* Runs 3 animations: Fade in once, flicker infinitely, jitter infinitely */
-            animation: fadeIn 3s forwards, glitchFlicker 5s infinite, jitter 0.15s infinite;
+            /* Jitter is now set to an 8 second loop */
+            animation: fadeIn 3s forwards, glitchFlicker 5s infinite, jitter 8s infinite;
             z-index: 1;
         }
 
@@ -59,13 +59,12 @@
             82% { opacity: 1; }
         }
 
-        /* Micro-movements to make the screen feel unstable */
+        /* Stays still for 96% of the 8 seconds, then violently jitters for the last fraction */
         @keyframes jitter {
-            0% { transform: translate(0, 0); }
-            20% { transform: translate(-1px, 1px); }
-            40% { transform: translate(1px, -1px); }
-            60% { transform: translate(-1px, 2px); }
-            80% { transform: translate(2px, -1px); }
+            0%, 96% { transform: translate(0, 0); }
+            97% { transform: translate(-2px, 1px); }
+            98% { transform: translate(2px, -2px); }
+            99% { transform: translate(-1px, 2px); }
             100% { transform: translate(0, 0); }
         }
 
@@ -143,7 +142,6 @@
     <script>
         // Start Game Redirect
         function startGame() {
-            // This will look for your first playable night HTML file
             window.location.href = 'night1.html'; 
         }
 
