@@ -4,6 +4,19 @@ const btnDeport = document.getElementById('btn-deport');
 const btnMissile = document.getElementById('btn-missile');
 const btnCamera = document.getElementById('camera-btn'); // Grab the camera button
 
+// --- Audio System ---
+const taskAudio = new Audio('../Sounds/alex_jauk-coffee-machine-noise-218424.mp3');
+
+function startTaskAudio() {
+    taskAudio.currentTime = 0;
+    taskAudio.play().catch(e => console.log("Audio block:", e));
+}
+
+function stopTaskAudio() {
+    taskAudio.pause();
+    taskAudio.currentTime = 0;
+}
+
 // Task Progress Variables
 let deportCount = 0;
 const MAX_DEPORT = 10;
@@ -32,6 +45,8 @@ window.cancelCurrentTask = function() {
         clearInterval(activeTaskTimer);
         activeTaskTimer = null;
         window.isTaskActive = false;
+        
+        stopTaskAudio(); // Stop the sound if canceled
         
         // Reset Button UI
         if (activeTaskType === 'deport') {
@@ -65,6 +80,8 @@ btnDeport.addEventListener('click', () => {
     setTaskButtonsDisabled(true);
     btnDeport.style.color = "#ffaa00"; 
     
+    startTaskAudio(); // Start the sound
+
     let timeLeft = 5;
     btnDeport.innerText = `Processing... (${timeLeft}s)`;
 
@@ -84,6 +101,8 @@ function finishDeportation() {
     deportCount++;
     window.isTaskActive = false;
     activeTaskType = null;
+    
+    stopTaskAudio(); // Stop the sound when finished
     setTaskButtonsDisabled(false);
     
     btnDeport.style.color = "#ccc"; 
@@ -109,6 +128,8 @@ btnMissile.addEventListener('click', () => {
     setTaskButtonsDisabled(true);
     btnMissile.style.color = "#ffaa00"; 
     
+    startTaskAudio(); // Start the sound
+    
     window.lastMissileTime = Date.now();
     window.elongAngerMultiplier = 1.0;
 
@@ -132,6 +153,8 @@ function finishMissile() {
     missileCount++;
     window.isTaskActive = false;
     activeTaskType = null;
+    
+    stopTaskAudio(); // Stop the sound when finished
     setTaskButtonsDisabled(false);
     
     btnMissile.style.color = "#ccc";
@@ -166,7 +189,42 @@ function checkWinCondition() {
     }
 }
 
+function launchConfetti() {
+    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'];
+    for (let i = 0; i < 150; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.left = Math.random() * 100 + 'vw';
+        confetti.style.top = '-20px';
+        confetti.style.width = Math.random() * 10 + 5 + 'px';
+        confetti.style.height = Math.random() * 20 + 10 + 'px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.zIndex = '10001';
+        confetti.style.opacity = Math.random() + 0.5;
+        confetti.style.pointerEvents = 'none';
+        document.body.appendChild(confetti);
+
+        const duration = Math.random() * 3 + 2; // 2 to 5 seconds fall time
+        const delay = Math.random() * 1.5; // Random start delay
+
+        // Use Web Animations API for smooth, dynamic particle dropping
+        confetti.animate([
+            { transform: `translate3d(0, 0, 0) rotate(0deg)`, opacity: 1 },
+            { transform: `translate3d(${Math.random() * 200 - 100}px, 100vh, 0) rotate(${Math.random() * 720}deg)`, opacity: 0 }
+        ], {
+            duration: duration * 1000,
+            delay: delay * 1000,
+            easing: 'cubic-bezier(.37, 0, .63, 1)',
+            fill: 'forwards'
+        });
+
+        // Cleanup element after it falls
+        setTimeout(() => confetti.remove(), (duration + delay) * 1000 + 100);
+    }
+}
+
 function triggerWin() {
+    // 1. Create the black fade-out overlay
     const fadeOutDiv = document.createElement('div');
     fadeOutDiv.style.position = 'fixed';
     fadeOutDiv.style.top = '0';
@@ -180,6 +238,7 @@ function triggerWin() {
     fadeOutDiv.style.pointerEvents = 'all'; 
     document.body.appendChild(fadeOutDiv);
 
+    // 2. Create the 6:00 AM Text
     const winText = document.createElement('div');
     winText.innerText = "6:00 AM";
     winText.style.position = 'fixed';
@@ -195,6 +254,19 @@ function triggerWin() {
     winText.style.transition = 'opacity 3s ease-in-out 1.5s'; 
     document.body.appendChild(winText);
 
-    setTimeout(() => { fadeOutDiv.style.opacity = '1'; }, 100);
-    setTimeout(() => { winText.style.opacity = '1'; }, 2000);
+    // 3. Load Audio
+    const clockChime = new Audio('../Sounds/li-bing-tower-clock-chimewestminster-187254.mp3');
+    const confettiCheer = new Audio('../Sounds/u_jspnqv1glx-1gift-confetti-447240.mp3');
+
+    // 4. Execute Sequence
+    setTimeout(() => { 
+        fadeOutDiv.style.opacity = '1'; 
+        clockChime.play().catch(e => console.log("Audio block:", e));
+    }, 100);
+
+    setTimeout(() => { 
+        winText.style.opacity = '1'; 
+        confettiCheer.play().catch(e => console.log("Audio block:", e));
+        launchConfetti(); // Trigger the visual confetti effect
+    }, 2000); // Cheer and visual confetti play right as the text appears
 }
