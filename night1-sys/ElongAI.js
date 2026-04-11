@@ -9,6 +9,7 @@ const elongAudioCues = [
 ];
 
 const elongJumpscareSound = new Audio('../Sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3');
+const elongStaticSound = new Audio('../Sounds/yourugor-tv-static-noise-291374.mp3'); 
 const elongOfficeSprite = document.getElementById('elong-sprite-office');
 
 const elongMap = {
@@ -24,10 +25,14 @@ let elongAtDoor = false;
 let elongGraceTimer = null;
 let elongSoundLoop = null;
 
+// Hardware lock for the 1-minute timer
+let elongActive = false; 
+
 window.aiPositions.elong = elongCurrentRoom;
 
 function moveElong() {
-    if (elongAtDoor || window.rightDoorClosed) return; 
+    // If 1 minute hasn't passed, or he's at the door, or door is closed, do nothing.
+    if (!elongActive || elongAtDoor || window.rightDoorClosed) return; 
 
     const roll = Math.floor(Math.random() * 3) + 1;
     let nextRoom = elongCurrentRoom;
@@ -42,22 +47,31 @@ function moveElong() {
         else nextRoom = connections[0];
     }
 
-    // --- THE FIX: Flicker to hide the move ---
     if (nextRoom !== elongCurrentRoom) {
-        // If the player is looking at the camera, flicker the screen
-        if (window.isCameraOpen && typeof window.triggerFlicker === "function") {
-            window.triggerFlicker(); 
+        
+        // 1. Play static noise
+        elongStaticSound.currentTime = 0;
+        elongStaticSound.play().catch(() => {});
+
+        // 2. Trigger the 5-second long visual static if camera is open
+        if (window.isCameraOpen && typeof window.triggerLongFlicker === "function") {
+            window.triggerLongFlicker(); 
         }
 
-        // Delay the actual position swap by 150ms (halfway through flicker)
+        // 3. Wait 200ms for static to cover screen, then move him
         setTimeout(() => {
             elongCurrentRoom = nextRoom;
             window.aiPositions.elong = elongCurrentRoom;
             
+            // Force camera screen to redraw
+            if (typeof window.refreshCameraUI === "function") {
+                window.refreshCameraUI();
+            }
+
             if (elongCurrentRoom === 'Presidential Right Door') {
                 triggerElongAtDoor();
             }
-        }, 150);
+        }, 200); 
     }
 }
 
@@ -82,7 +96,7 @@ function handleElongLinger() {
     const lingerTime = Math.random() * 5000 + 5000;
     setTimeout(() => {
         if (window.rightDoorClosed) resetElong();
-        else triggerElongJumpscare(); // If they opened it while he was still there!
+        else triggerElongJumpscare(); 
     }, lingerTime);
 }
 
@@ -101,7 +115,6 @@ function playElongHorrorSound() {
 }
 
 function triggerElongJumpscare() {
-    // Hide camera monitor immediately
     const mon = document.getElementById('camera-monitor');
     if (mon) mon.style.display = 'none';
 
@@ -122,5 +135,14 @@ function triggerElongJumpscare() {
     }, 1500);
 }
 
-// Night 1 Speed: Every 18 seconds (slightly slower for better pacing)
-setInterval(moveElong, 18000);
+// --- INITIAL GRACE PERIOD ---
+// Unlock the AI after exactly 60 seconds.
+setTimeout(() => {
+    elongActive = true;
+    console.log("1 MINUTE PASSED: Elong is now active.");
+    
+    // He makes his first move immediately, then checks every 20 seconds
+    moveElong();
+    setInterval(moveElong, 20000);
+    
+}, 60000);
