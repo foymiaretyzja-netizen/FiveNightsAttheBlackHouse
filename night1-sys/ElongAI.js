@@ -9,9 +9,8 @@ const elongAudioCues = [
 ];
 
 const elongJumpscareSound = new Audio('../Sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3');
-const elongSpriteImg = document.getElementById('elong-sprite');
+const elongOfficeSprite = document.getElementById('elong-sprite-office');
 
-// Map Logic based on your connections
 const elongMap = {
     'Storage': ['Kitchen', 'Conference Room'],
     'Kitchen': ['Storage', 'Diner', 'Conference Room'],
@@ -25,76 +24,65 @@ let elongAtDoor = false;
 let elongGraceTimer = null;
 let elongSoundLoop = null;
 
-// Initial state
 window.aiPositions.elong = elongCurrentRoom;
 
-/**
- * ELONG MOVEMENT LOGIC (The 1/3 System)
- * Triggered by Missile Task failure thresholds or global game loop
- */
 function moveElong() {
-    if (elongAtDoor) return; // Don't move if already at the door
+    if (elongAtDoor || window.rightDoorClosed) return; 
 
-    // 1/3 System: 1 = Wander, 2 & 3 = Hunt (Point to player)
     const roll = Math.floor(Math.random() * 3) + 1;
+    let nextRoom = elongCurrentRoom;
     const connections = elongMap[elongCurrentRoom];
 
     if (roll === 1) {
-        // WANDER: Pick any connected room
-        elongCurrentRoom = connections[Math.floor(Math.random() * connections.length)];
+        nextRoom = connections[Math.floor(Math.random() * connections.length)];
     } else {
-        // HUNT: Point to Presidential Room
-        // Sharp Pathing: Storage -> Conference -> Door
-        if (elongCurrentRoom === 'Storage') elongCurrentRoom = 'Conference Room';
-        else if (elongCurrentRoom === 'Conference Room') elongCurrentRoom = 'Presidential Right Door';
-        else if (elongCurrentRoom === 'Kitchen') elongCurrentRoom = 'Conference Room';
-        else {
-            // Fallback: move to a random connection if path is unclear
-            elongCurrentRoom = connections[0];
-        }
+        if (elongCurrentRoom === 'Storage') nextRoom = 'Conference Room';
+        else if (elongCurrentRoom === 'Conference Room') nextRoom = 'Presidential Right Door';
+        else if (elongCurrentRoom === 'Kitchen') nextRoom = 'Conference Room';
+        else nextRoom = connections[0];
     }
 
-    window.aiPositions.elong = elongCurrentRoom;
-    console.log("Elong moved to: " + elongCurrentRoom);
+    // --- THE FIX: Flicker to hide the move ---
+    if (nextRoom !== elongCurrentRoom) {
+        // If the player is looking at the camera, flicker the screen
+        if (window.isCameraOpen && typeof window.triggerFlicker === "function") {
+            window.triggerFlicker(); 
+        }
 
-    if (elongCurrentRoom === 'Presidential Right Door') {
-        triggerElongAtDoor();
+        // Delay the actual position swap by 150ms (halfway through flicker)
+        setTimeout(() => {
+            elongCurrentRoom = nextRoom;
+            window.aiPositions.elong = elongCurrentRoom;
+            
+            if (elongCurrentRoom === 'Presidential Right Door') {
+                triggerElongAtDoor();
+            }
+        }, 150);
     }
 }
 
 function triggerElongAtDoor() {
     elongAtDoor = true;
-    
-    // 1. Guaranteed first sound
     playElongHorrorSound();
 
-    // 2. Start the 10s Death Timer
     elongGraceTimer = setTimeout(() => {
-        // Check if door is closed via the global variable from night1.html
         if (!window.rightDoorClosed) {
             triggerElongJumpscare();
         } else {
-            // Player saved themselves, start lingering logic
             handleElongLinger();
         }
     }, 10000);
 
-    // 3. 1/3 Sound Loop (Every 10s)
     elongSoundLoop = setInterval(() => {
-        if (Math.random() < 0.33) {
-            playElongHorrorSound();
-        }
+        if (Math.random() < 0.33) playElongHorrorSound();
     }, 10000);
 }
 
 function handleElongLinger() {
-    // Wait 5-10s before leaving
     const lingerTime = Math.random() * 5000 + 5000;
-    
     setTimeout(() => {
-        // If door is still closed, he leaves back to start
-        console.log("Elong gave up and went back to Storage.");
-        resetElong();
+        if (window.rightDoorClosed) resetElong();
+        else triggerElongJumpscare(); // If they opened it while he was still there!
     }, lingerTime);
 }
 
@@ -109,37 +97,30 @@ function resetElong() {
 function playElongHorrorSound() {
     const sound = elongAudioCues[Math.floor(Math.random() * elongAudioCues.length)];
     sound.currentTime = 0;
-    sound.play().catch(e => console.log("Audio Blocked"));
+    sound.play().catch(() => {});
 }
 
 function triggerElongJumpscare() {
-    console.log("GAME OVER: Elong caught you.");
-    
-    // Visuals: Show sprite, center it, and zoom
-    elongSpriteImg.style.display = 'block';
-    elongSpriteImg.style.left = '50%';
-    elongSpriteImg.style.transform = 'translateX(-50%) scale(1)';
-    elongSpriteImg.style.transition = 'transform 0.2s ease-in';
-    elongSpriteImg.style.zIndex = '999';
-    
-    // Zoom effect
-    setTimeout(() => {
-        elongSpriteImg.style.transform = 'translateX(-50%) scale(5)';
-    }, 50);
+    // Hide camera monitor immediately
+    const mon = document.getElementById('camera-monitor');
+    if (mon) mon.style.display = 'none';
 
-    // Sound
+    elongOfficeSprite.style.display = 'block';
+    elongOfficeSprite.style.left = '50%';
+    elongOfficeSprite.style.transform = 'translateX(-50%) scale(1.5)';
+    
     elongJumpscareSound.play();
 
-    // End Game Logic (optional: reload page)
     setTimeout(() => {
-        alert("YOU DIED");
+        elongOfficeSprite.style.transform = 'translateX(-50%) scale(8)';
+        elongOfficeSprite.style.filter = 'brightness(2)';
+    }, 50);
+
+    setTimeout(() => {
+        alert("ELONG TERMINATED YOUR CONTRACT.");
         location.reload();
-    }, 1000);
+    }, 1500);
 }
 
-// Start his movement loop (Every 15s for Night 1)
-setInterval(() => {
-    // Only move if stress is high enough (placeholder check)
-    // In a full build, this would check: if (missileStress > 33)
-    moveElong();
-}, 15000);
+// Night 1 Speed: Every 18 seconds (slightly slower for better pacing)
+setInterval(moveElong, 18000);
