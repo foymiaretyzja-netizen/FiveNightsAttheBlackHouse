@@ -142,7 +142,7 @@
             align-items: center;
         }
 
-        /* --- 6. Camera System Layout & CRT Effects --- */
+        /* --- 6. Camera System Layout --- */
         #camera-layout {
             display: flex;
             width: 100%;
@@ -229,16 +229,27 @@
         }
         .is-switching { animation: flashEffect 0.3s ease-out; }
 
+        /* Sprite styling for Camera and Office */
         .ai-sprite {
             position: absolute;
-            bottom: 50px;
-            height: 60%;
             z-index: 5;
             display: none; 
         }
 
+        /* Camera Sprites */
+        #camera-screen .ai-sprite {
+            bottom: 50px;
+            height: 60%;
+        }
         #charrlie-sprite { left: 20%; }
         #elong-sprite { right: 20%; }
+
+        /* Office/Jumpscare Sprites */
+        #elong-sprite-office, #charrlie-sprite-office {
+            height: 70%;
+            bottom: 10%;
+            z-index: 100;
+        }
 
     </style>
 </head>
@@ -285,19 +296,25 @@
         </div>
     </div>
 
+    <img id="charrlie-sprite-office" class="ai-sprite" src="../night1-sys/sprites/Charrlie.png">
+    <img id="elong-sprite-office" class="ai-sprite" src="../night1-sys/sprites/Elong.png">
+
     <script>
         const panorama = document.getElementById('office-panorama');
         const leftShadow = document.getElementById('left-shadow');
         const rightShadow = document.getElementById('right-shadow');
         const leftPanel = document.getElementById('left-panel');
         const rightPanel = document.getElementById('right-panel');
-        const cameraMonitor = document.getElementById('camera-monitor');
         
         const maxPan = window.innerWidth * 0.5; 
-        let leftDoorClosed = false;
-        let rightDoorClosed = false;
-        window.isCameraOpen = false; // Made global so other scripts can read it
+        
+        // Globals for AI and Cameras
+        window.leftDoorClosed = false;
+        window.rightDoorClosed = false;
+        window.isCameraOpen = false;
+        window.aiPositions = { charrlie: 'Guest Room', elong: 'Storage' };
 
+        // Panning Logic
         document.addEventListener('mousemove', (e) => {
             if (window.isCameraOpen) return; 
 
@@ -314,10 +331,11 @@
             if (percentage > 0.65) rightPanel.classList.add('is-visible');
             else rightPanel.classList.remove('is-visible');
 
-            if (leftDoorClosed) leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
-            if (rightDoorClosed) rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
+            if (window.leftDoorClosed) leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
+            if (window.rightDoorClosed) rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
         });
 
+        // Door Audio
         const openSounds = [
             new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
             new Audio('../Sounds/soundreality-opening-door-411632.mp3')
@@ -328,8 +346,7 @@
         ];
 
         function playRandomSound(soundArray) {
-            const randomIndex = Math.floor(Math.random() * soundArray.length);
-            const sound = soundArray[randomIndex];
+            const sound = soundArray[Math.floor(Math.random() * soundArray.length)];
             sound.currentTime = 0; 
             sound.play().catch(e => console.log("Audio block:", e));
         }
@@ -338,24 +355,21 @@
             if (window.isCameraOpen) return; 
 
             if (side === 'left') {
-                leftDoorClosed = !leftDoorClosed;
-                playRandomSound(leftDoorClosed ? closeSounds : openSounds);
-                if (!leftDoorClosed) leftShadow.style.opacity = 0;
+                window.leftDoorClosed = !window.leftDoorClosed;
+                playRandomSound(window.leftDoorClosed ? closeSounds : openSounds);
+                if (!window.leftDoorClosed) leftShadow.style.opacity = 0;
             } else if (side === 'right') {
-                rightDoorClosed = !rightDoorClosed;
-                playRandomSound(rightDoorClosed ? closeSounds : openSounds);
-                if (!rightDoorClosed) rightShadow.style.opacity = 0;
+                window.rightDoorClosed = !window.rightDoorClosed;
+                playRandomSound(window.rightDoorClosed ? closeSounds : openSounds);
+                if (!window.rightDoorClosed) rightShadow.style.opacity = 0;
             }
         };
-
-        // Note: The toggleCamera logic has been removed from here 
-        // because it is now securely handled inside cameras.js
     </script>
 
     <script src="../night1-sys/cameras.js"></script>
     <script src="../night1-sys/deportation.js"></script>
     <script src="../night1-sys/missile.js"></script>
-    <script src="../night1-sys/ai.js"></script>
+    <script src="../night1-sys/ElongAI.js"></script>
 
 </body>
 </html>
