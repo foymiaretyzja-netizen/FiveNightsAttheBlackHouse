@@ -8,8 +8,8 @@ let power = 100.0;
 let isBlackout = false;
 let lightsOn = true;
 
-// Base drain per second when sitting in the office doing nothing
-const BASE_DRAIN = 0.4; 
+// 100% / 300 seconds (5 mins) = ~0.33 drain per second
+const BASE_DRAIN = 0.33; 
 
 // Toggle Lights Button Logic
 btnLights.addEventListener('click', () => {
@@ -36,15 +36,15 @@ setInterval(() => {
 
     let currentDrain = BASE_DRAIN;
 
-    // The user's rule: turning off the lights stops draining so much power (-50% base drain)
+    // Turning off the lights stops draining so much power (-50% base drain)
     if (!lightsOn) {
         currentDrain *= 0.5; 
     }
 
-    // You can easily add other drains here later:
-    if (window.leftDoorClosed) currentDrain += 0.2;
-    if (window.rightDoorClosed) currentDrain += 0.2;
-    if (window.isCameraOpen) currentDrain += 0.3;
+    // Heavy Power Drainers
+    if (window.leftDoorClosed) currentDrain += 0.15;
+    if (window.rightDoorClosed) currentDrain += 0.15;
+    if (window.isCameraOpen) currentDrain += 0.10;
 
     power -= currentDrain;
 
@@ -71,7 +71,7 @@ function triggerBlackout() {
     powerDisplay.innerText = "Power: 0%";
     powerDisplay.style.color = "#ff0000";
 
-    // Open doors if they were closed (standard FNAF mechanic)
+    // Open doors if they were closed
     window.leftDoorClosed = false;
     window.rightDoorClosed = false;
     document.getElementById('left-shadow').style.opacity = 0;
@@ -82,6 +82,5 @@ function triggerBlackout() {
         window.toggleCamera();
     }
 
-    // To-Do for later: Play a scary power-down sound here
     console.log("SYSTEM FAILURE: OUT OF POWER");
 }
