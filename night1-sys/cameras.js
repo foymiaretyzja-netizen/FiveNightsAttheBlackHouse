@@ -6,10 +6,10 @@ const staticFlash = document.getElementById('static-flash');
 const charrlieSprite = document.getElementById('charrlie-sprite');
 const elongSprite = document.getElementById('elong-sprite');
 
-// Grab these so we can control the UI slide directly from here
-const cameraMonitor = document.getElementById('camera-monitor');
-const leftPanel = document.getElementById('left-panel');
-const rightPanel = document.getElementById('right-panel');
+// Renamed these variables so they don't clash with the ones in night1.html!
+const camUIMonitor = document.getElementById('camera-monitor');
+const camUILeftPanel = document.getElementById('left-panel');
+const camUIRightPanel = document.getElementById('right-panel');
 
 const camSounds = [
     new Audio('../Sounds/freesound_community-aiwa-cx-930-vhs-vcr-video-cassette-recorderwav-14430.mp3'),
@@ -88,17 +88,17 @@ window.toggleCamera = function() {
     window.isCameraOpen = !window.isCameraOpen;
     
     if (window.isCameraOpen) {
-        // Slide monitor up & hide task panels
-        cameraMonitor.style.transform = 'translateY(0)'; 
-        leftPanel.classList.remove('is-visible');
-        rightPanel.classList.remove('is-visible');
+        // Slide monitor up & hide task panels using the renamed variables
+        camUIMonitor.style.transform = 'translateY(0)'; 
+        camUILeftPanel.classList.remove('is-visible');
+        camUIRightPanel.classList.remove('is-visible');
         
         playCameraSound();
         triggerFlicker();
         switchCamera(currentCamera, false); 
     } else {
         // Slide monitor down & stop audio
-        cameraMonitor.style.transform = 'translateY(100%)'; 
+        camUIMonitor.style.transform = 'translateY(100%)'; 
         if (currentCamAudio) {
             currentCamAudio.pause();
             currentCamAudio.currentTime = 0;
