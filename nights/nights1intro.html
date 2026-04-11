@@ -1,1 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tutorial - Five Nights at the Black House</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; 
+            user-select: none;
+        }
 
+        /* Slowly zooming background container */
+        #bg-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-size: cover;
+            background-position: center;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out, background-image 1.5s ease-in-out;
+            animation: slowPan 10s linear infinite alternate;
+            z-index: 1;
+        }
+
+        @keyframes slowPan {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* CRT Static Overlay */
+        #static-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: repeating-linear-gradient(
+                0deg, rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 4px
+            );
+            pointer-events: none;
+            z-index: 5;
+            opacity: 0.6;
+        }
+
+        /* Tutorial Text Container */
+        #text-container {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            text-align: center;
+            z-index: 10;
+        }
+
+        #tutorial-text {
+            font-size: 2.2rem;
+            line-height: 1.4;
+            text-shadow: 2px 2px 8px #000, 0 0 20px #000;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        /* Highlight specific keywords */
+        .highlight { color: #ff4444; font-weight: bold; }
+        .highlight-blue { color: #44aaff; font-weight: bold; }
+
+        /* Skip Button */
+        #skip-btn {
+            position: absolute;
+            bottom: 30px; right: 40px;
+            font-size: 1.2rem;
+            color: #aaa;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            z-index: 20;
+            font-family: inherit;
+            transition: color 0.2s, text-shadow 0.2s;
+        }
+        #skip-btn:hover {
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-layer"></div>
+    <div id="static-overlay"></div>
+
+    <div id="text-container">
+        <div id="tutorial-text"></div>
+    </div>
+
+    <button id="skip-btn" onclick="startGame()">Press to Skip</button>
+
+    <script>
+        // Array of tutorial slides matching text to background images
+        const tutorialSlides = [
+            { text: "Your shift lasts 7 minutes. Complete your quotas to leave early.", img: "Scenes/Presidential-room.jpg" },
+            { text: "LEFT TAB: Deportations. Click and sign 10 papers. Each takes 5 seconds.", img: "Scenes/Conference room.jpg" },
+            { text: "RIGHT TAB: Missile Strikes. Hold button for 10 seconds. Quota: 5.", img: "Scenes/Storage.jpg" },
+            { text: "THREAT 1: <span class='highlight'>ELONG MUST</span>. He moves through the facility.", img: "Scenes/Diner.jpg" },
+            { text: "If you fail to launch missiles fast enough, he speeds up.", img: "Scenes/Kitchen.jpg" },
+            { text: "Watch the cameras. If a feed flickers black, he has moved. Close the door to block him.", img: "Scenes/Janitor-room.jpg" },
+            { text: "THREAT 2: <span class='highlight'>CHARRLIE HIRK</span>. He is mostly stationary.", img: "Scenes/Guest-room.jpg" },
+            { text: "If you neglect deportations, he will bypass cameras and rush your room.", img: "Scenes/Conference room.jpg" },
+            { text: "If you see a flickering <span class='highlight'>CAUTION</span> symbol on the cameras, close ALL doors.", img: "Scenes/Presidential-room.jpg" },
+            { text: "Doors consume power. Cameras do not. If power reaches 0%, you will not survive.", img: "Scenes/Storage.jpg" },
+            { text: "Good luck.", img: "Scenes/Presidential-room.jpg" }
+        ];
+
+        const bgLayer = document.getElementById('bg-layer');
+        const textElement = document.getElementById('tutorial-text');
+        let currentSlide = 0;
+
+        function showSlide() {
+            if (currentSlide < tutorialSlides.length) {
+                // Fade out text, change content, then fade back in
+                textElement.style.opacity = 0;
+                
+                setTimeout(() => {
+                    bgLayer.style.backgroundImage = `url('${tutorialSlides[currentSlide].img}')`;
+                    bgLayer.style.opacity = 0.5; // Keeps image slightly dim so text is readable
+                    
+                    textElement.innerHTML = tutorialSlides[currentSlide].text;
+                    textElement.style.opacity = 1;
+                    
+                    currentSlide++;
+                    
+                    // Wait 5 seconds before showing the next slide
+                    setTimeout(showSlide, 5000); 
+                }, 1000); // 1 second to let text fade out
+            } else {
+                // Out of slides, start game
+                startGame();
+            }
+        }
+
+        function startGame() {
+            window.location.href = 'night1.html';
+        }
+
+        // Start the sequence shortly after loading
+        setTimeout(showSlide, 500);
+    </script>
+</body>
+</html>
