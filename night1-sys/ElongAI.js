@@ -1,10 +1,10 @@
 // --- night1-sys/ElongAI.js ---
 
 const elongAudioCues = [
-    new Audio('../Sounds/freesound_community-creepy-vocal-ambience-6074.mp3'),
-    new Audio('../Sounds/dragon-studio-heavy-creaking-515252.mp3'),
+    new Audio('../Sounds/soundreality-knocking-on-a-metal-door-226310.mp3'),
+    new Audio('../Sounds/aglaxle-glass-shattering-461637.mp3'),
     new Audio('../Sounds/freesound_community-hitting-metal-31859.mp3'),
-    new Audio('../Sounds/jusatti890-scream-horror-sfx-490916.mp3'),
+    new Audio('../Sounds/dragon-studio-knocking-door-1-397992.mp3'),
     new Audio('../Sounds/alesiadavina-horror-sound-monster-breath-189934.mp3')
 ];
 
