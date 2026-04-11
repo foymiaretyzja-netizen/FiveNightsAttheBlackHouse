@@ -54,7 +54,7 @@
         .cursor { animation: blink 1s infinite; }
         @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-        /* --- NEW: Skip Indicator Styles --- */
+        /* --- Skip Indicator Styles --- */
         #skip-indicator {
             position: absolute;
             bottom: 30px;
@@ -89,6 +89,8 @@
 </head>
 <body>
 
+    <audio id="bg-music" src="Sounds/universfield-horror-background-atmosphere-06-199279.mp3" loop autoplay></audio>
+
     <div id="intro-container">
         <div id="layer1" class="bg-image active"></div>
         <div id="layer2" class="bg-image"></div>
@@ -101,6 +103,16 @@
     </div>
 
     <script>
+        // --- 0. Audio Playback Logic ---
+        // Browsers block autoplay until the user interacts with the page.
+        // This ensures the audio starts the moment they click anywhere (like trying to skip).
+        document.body.addEventListener("click", () => {
+            const bgMusic = document.getElementById("bg-music");
+            if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log("Audio play failed:", e));
+            }
+        }, { once: true });
+
         // --- 1. Image Fading Logic ---
         const images = [
             'StoryScenes/Tehran.jpg', 
@@ -169,7 +181,7 @@
         }
         setTimeout(typeWriter, 1000);
 
-        // --- 3. NEW: Hold-to-Skip Logic ---
+        // --- 3. Hold-to-Skip Logic ---
         const skipBtn = document.getElementById('skip-indicator');
         let skipTimer;
         const holdTimeToSkip = 1500; // 1.5 seconds
