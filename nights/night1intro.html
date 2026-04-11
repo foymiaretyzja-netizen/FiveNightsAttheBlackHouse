@@ -14,6 +14,32 @@
             user-select: none;
         }
 
+        /* --- NEW: Start Screen --- */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Sits on top of everything else */
+            cursor: pointer;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #start-text {
+            font-size: 1.5rem;
+            color: #aaa;
+            animation: slowPulse 2s infinite;
+            user-select: none;
+        }
+
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
         /* Slowly zooming background container */
         #bg-layer {
             position: absolute;
@@ -86,6 +112,12 @@
 </head>
 <body>
 
+    <audio id="bg-music" src="../Sounds/freesound_community-horror-ambience-01-66708.mp3" loop></audio>
+
+    <div id="start-screen">
+        <div id="start-text">[Click anywhere to start]</div>
+    </div>
+
     <div id="bg-layer"></div>
     <div id="static-overlay"></div>
 
@@ -98,22 +130,36 @@
     <script>
         // Array of tutorial slides matching text to background images
         const tutorialSlides = [
-            { text: "Your shift lasts 7 Hours. Complete your quotas to leave early.", img: "Scenes/Presidential-room.jpg" },
-            { text: "LEFT TAB: Deportations. Click and sign 10 papers. Each takes 5 seconds.", img: "Scenes/Conference room.jpg" },
-            { text: "RIGHT TAB: Missile Strikes. Hold button for 10 seconds. Quota: 5.", img: "Scenes/Storage.jpg" },
-            { text: "THREAT 1: <span class='highlight'>ELONG MUST</span>. He moves through the facility.", img: "Scenes/Diner.jpg" },
-            { text: "If you fail to launch missiles fast enough, he speeds up.", img: "Scenes/Kitchen.jpg" },
-            { text: "Watch the cameras. If a feed flickers black, he has moved. Close the door to block him.", img: "Scenes/Janitor-room.jpg" },
-            { text: "THREAT 2: <span class='highlight'>CHARRLIE HIRK</span>. He is mostly stationary.", img: "Scenes/Guest-room.jpg" },
-            { text: "If you neglect deportations, he will bypass cameras and rush your room.", img: "Scenes/Conference room.jpg" },
-            { text: "If you see a flickering <span class='highlight'>CAUTION</span> symbol on the cameras, close ALL doors.", img: "Scenes/Presidential-room.jpg" },
-            { text: "Doors consume power. Cameras do not. If power reaches 0%, you will not survive.", img: "Scenes/Storage.jpg" },
-            { text: "Good luck.", img: "Scenes/Presidential-room.jpg" }
+            { text: "Your shift lasts 7 Hours. Complete your quotas to leave early.", img: "../StoryScenes/Presidential-room.jpg" },
+            { text: "LEFT TAB: Deportations. Click and sign 10 papers. Each takes 5 seconds.", img: "../StoryScenes/Conference room.jpg" },
+            { text: "RIGHT TAB: Missile Strikes. Hold button for 10 seconds. Quota: 5.", img: "../StoryScenes/Storage.jpg" },
+            { text: "THREAT 1: <span class='highlight'>ELONG MUST</span>. He moves through the facility.", img: "../StoryScenes/Diner.jpg" },
+            { text: "If you fail to launch missiles fast enough, he speeds up.", img: "../StoryScenes/Kitchen.jpg" },
+            { text: "Watch the cameras. If a feed flickers black, he has moved. Close the door to block him.", img: "../StoryScenes/Janitor-room.jpg" },
+            { text: "THREAT 2: <span class='highlight'>CHARRLIE HIRK</span>. He is mostly stationary.", img: "../StoryScenes/Guest-room.jpg" },
+            { text: "If you neglect deportations, he will bypass cameras and rush your room.", img: "../StoryScenes/Conference room.jpg" },
+            { text: "If you see a flickering <span class='highlight'>CAUTION</span> symbol on the cameras, close ALL doors.", img: "../StoryScenes/Presidential-room.jpg" },
+            { text: "Doors consume power. Cameras do not. If power reaches 0%, you will not survive.", img: "../StoryScenes/Storage.jpg" },
+            { text: "Good luck.", img: "../StoryScenes/Presidential-room.jpg" }
         ];
 
         const bgLayer = document.getElementById('bg-layer');
         const textElement = document.getElementById('tutorial-text');
         let currentSlide = 0;
+
+        // --- NEW: Start Screen & Audio Logic ---
+        document.getElementById('start-screen').addEventListener('click', function() {
+            // Play Audio
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
+
+            // Fade out and remove the start screen overlay
+            this.style.opacity = '0';
+            setTimeout(() => this.remove(), 1000);
+
+            // Start the sequence shortly after clicking
+            setTimeout(showSlide, 500);
+        }, { once: true }); // Triggers only on the very first click
 
         function showSlide() {
             if (currentSlide < tutorialSlides.length) {
@@ -141,9 +187,6 @@
         function startGame() {
             window.location.href = 'night1.html';
         }
-
-        // Start the sequence shortly after loading
-        setTimeout(showSlide, 500);
     </script>
 </body>
 </html>
