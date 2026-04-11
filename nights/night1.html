@@ -97,7 +97,7 @@
             background: linear-gradient(to left, rgba(0,0,0,0.95) 10%, transparent);
         }
 
-        /* --- 5. NEW: Camera Button & Monitor Overlay --- */
+        /* --- 5. Camera Button & Monitor Overlay --- */
         #camera-btn {
             position: absolute;
             bottom: 20px;
@@ -109,7 +109,7 @@
             border: 2px solid rgba(255, 255, 255, 0.3);
             border-radius: 5px;
             cursor: pointer;
-            z-index: 60; /* Keeps it above everything, even the open monitor */
+            z-index: 60; 
             transition: background 0.2s, border 0.2s;
         }
 
@@ -126,21 +126,110 @@
             color: #aaa;
             line-height: 40px;
             font-family: sans-serif;
-            transform: scaleY(0.5); /* Flattens the 'v' to look like a double arrow or grip */
+            transform: scaleY(0.5); 
         }
 
         #camera-monitor {
             position: absolute;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
-            background: #111; /* Dark gray placeholder for now */
+            background: #111; 
             z-index: 50;
-            transform: translateY(100%); /* Hides it completely off the bottom of the screen */
-            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); /* Snappy FNAF-style slide */
+            transform: translateY(100%); 
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
             display: flex;
             justify-content: center;
             align-items: center;
         }
+
+        /* --- 6. Camera System Layout & CRT Effects --- */
+        #camera-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            padding: 40px;
+            gap: 30px;
+        }
+
+        #camera-nav {
+            flex: 0 0 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .cam-btn {
+            background: #222;
+            color: #ccc;
+            border: 2px solid #555;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        .cam-btn:hover, .cam-btn.active {
+            background: #555;
+            border-color: #fff;
+            color: #fff;
+        }
+
+        #camera-screen {
+            flex: 1;
+            position: relative;
+            border: 4px solid #333;
+            background: #000;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        #camera-feed {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        #crt-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #static-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @keyframes flashEffect {
+            0% { opacity: 0.9; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            100% { opacity: 0; }
+        }
+        .is-switching { animation: flashEffect 0.3s ease-out; }
+
+        .ai-sprite {
+            position: absolute;
+            bottom: 50px;
+            height: 60%;
+            z-index: 5;
+            display: none; 
+        }
+
+        #charrlie-sprite { left: 20%; }
+        #elong-sprite { right: 20%; }
 
     </style>
 </head>
@@ -151,13 +240,17 @@
     <div id="left-panel" class="task-panel">
         <div class="tab-label">DEP-3000</div>
         <h2 style="color: #ff4444; margin-bottom: 10px;">Deportations</h2>
-        <p style="color: #aaa;">[System Offline]</p>
+        <div id="dep-content">
+            <p id="dep-status" style="color: #aaa;">[System Offline - Load JS]</p>
+        </div>
     </div>
 
     <div id="right-panel" class="task-panel">
         <div class="tab-label">ML-900</div>
         <h2 style="color: #ff4444; margin-bottom: 10px;">Missile Strike</h2>
-        <p style="color: #aaa;">[System Offline]</p>
+        <div id="ml-content">
+            <p id="ml-status" style="color: #aaa;">[System Offline - Load JS]</p>
+        </div>
     </div>
 
     <div id="left-shadow" class="door-shadow"></div>
@@ -168,11 +261,20 @@
     <div id="camera-btn" onclick="toggleCamera()"></div>
 
     <div id="camera-monitor">
-        <h1 style="color: #444; text-shadow: 0 0 10px #000;">[CAMERA SYSTEM OFFLINE]</h1>
+        <div id="camera-layout">
+            <div id="camera-nav"></div>
+            
+            <div id="camera-screen">
+                <div id="camera-feed"></div>
+                <img id="charrlie-sprite" class="ai-sprite" src="../night1-sys/sprites/Charrlie.png" alt="Charrlie">
+                <img id="elong-sprite" class="ai-sprite" src="../night1-sys/sprites/Elong.png" alt="Elong">
+                <div id="crt-overlay"></div>
+                <div id="static-flash"></div>
+            </div>
+        </div>
     </div>
 
     <script>
-        // --- Core Variables ---
         const panorama = document.getElementById('office-panorama');
         const leftShadow = document.getElementById('left-shadow');
         const rightShadow = document.getElementById('right-shadow');
@@ -183,11 +285,10 @@
         const maxPan = window.innerWidth * 0.5; 
         let leftDoorClosed = false;
         let rightDoorClosed = false;
-        let isCameraOpen = false; // Tracks monitor state
+        window.isCameraOpen = false; // Made global so other scripts can read it
 
-        // --- Panning & Dynamic Shadow/UI Logic ---
         document.addEventListener('mousemove', (e) => {
-            if (isCameraOpen) return; // Stop panning while looking at the cameras
+            if (window.isCameraOpen) return; 
 
             const mouseX = e.clientX;
             const screenWidth = window.innerWidth;
@@ -196,34 +297,20 @@
             const panAmount = -(percentage * maxPan);
             panorama.style.transform = `translateX(${panAmount}px)`;
 
-            // Tab Visibility Logic 
-            if (percentage < 0.35) {
-                leftPanel.classList.add('is-visible');
-            } else {
-                leftPanel.classList.remove('is-visible');
-            }
+            if (percentage < 0.35) leftPanel.classList.add('is-visible');
+            else leftPanel.classList.remove('is-visible');
 
-            if (percentage > 0.65) {
-                rightPanel.classList.add('is-visible');
-            } else {
-                rightPanel.classList.remove('is-visible');
-            }
+            if (percentage > 0.65) rightPanel.classList.add('is-visible');
+            else rightPanel.classList.remove('is-visible');
 
-            // Shadow Logic
-            if (leftDoorClosed) {
-                leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
-            }
-            if (rightDoorClosed) {
-                rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
-            }
+            if (leftDoorClosed) leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
+            if (rightDoorClosed) rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
         });
 
-        // --- Door Logic ---
         const openSounds = [
             new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
             new Audio('../Sounds/soundreality-opening-door-411632.mp3')
         ];
-        
         const closeSounds = [
             new Audio('../Sounds/dragon-studio-door-close-effect-382710.mp3'),
             new Audio('../Sounds/freesound_community-door-close-79921.mp3')
@@ -237,7 +324,7 @@
         }
 
         window.toggleDoor = function(side) {
-            if (isCameraOpen) return; // Can't touch doors while on cameras
+            if (window.isCameraOpen) return; 
 
             if (side === 'left') {
                 leftDoorClosed = !leftDoorClosed;
@@ -250,18 +337,22 @@
             }
         };
 
-        // --- NEW: Camera Toggle Logic ---
         window.toggleCamera = function() {
-            isCameraOpen = !isCameraOpen;
-            if (isCameraOpen) {
-                cameraMonitor.style.transform = 'translateY(0)'; // Slide up
-                // Hide side panels instantly if they were peeking
+            window.isCameraOpen = !window.isCameraOpen;
+            if (window.isCameraOpen) {
+                cameraMonitor.style.transform = 'translateY(0)'; 
                 leftPanel.classList.remove('is-visible');
                 rightPanel.classList.remove('is-visible');
             } else {
-                cameraMonitor.style.transform = 'translateY(100%)'; // Slide down
+                cameraMonitor.style.transform = 'translateY(100%)'; 
             }
         };
     </script>
+
+    <script src="../night1-sys/cameras.js"></script>
+    <script src="../night1-sys/deportation.js"></script>
+    <script src="../night1-sys/missile.js"></script>
+    <script src="../night1-sys/ai.js"></script>
+
 </body>
 </html>
