@@ -19,39 +19,64 @@
         #office-panorama {
             position: absolute;
             top: 0; left: 0;
-            width: 150vw; /* 50% wider than the screen to allow panning */
+            width: 150vw; 
             height: 100vh;
             background-image: url('../Scenes/Presidential-room.jpg');
             background-size: cover;
             background-position: center;
             z-index: 1;
-            /* The transition adds a slight, cinematic delay to the camera movement */
             transition: transform 0.1s ease-out; 
         }
 
-        /* --- 2. Task Panels (Moves with the room) --- */
+        /* --- 2. Hover Task Tabs (Slide up from bottom) --- */
         .task-panel {
             position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
+            bottom: 0;
             width: 350px;
-            height: 250px;
-            background: rgba(10, 10, 10, 0.85);
-            border: 2px solid #333;
-            box-shadow: 0 0 20px #000;
+            height: 300px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #444;
+            border-bottom: none;
+            border-radius: 15px 15px 0 0;
             padding: 20px;
-            border-radius: 10px;
-            z-index: 5;
+            z-index: 30; /* Keep high so they overlap everything */
+            
+            /* Retracts instantly when mouse leaves */
+            transition: transform 0.3s ease 0s; 
         }
 
-        #left-panel { left: 10vw; }
-        #right-panel { right: 10vw; }
+        /* The little visual tab that sticks up */
+        .tab-label {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #ccc;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            pointer-events: none;
+        }
 
-        /* --- 3. Invisible Door Hitboxes (Stays fixed to screen edges) --- */
+        #left-panel { 
+            left: 8vw; 
+            transform: translateY(85%); /* Hides most of the panel */
+        }
+        
+        #right-panel { 
+            right: 8vw; 
+            transform: translateY(85%); 
+        }
+
+        /* Pulls out after 0.5s of hovering */
+        #left-panel:hover, #right-panel:hover {
+            transform: translateY(0);
+            transition: transform 0.3s ease 0.5s; 
+        }
+
+        /* --- 3. Invisible Door Hitboxes --- */
         .door-zone {
             position: absolute;
             top: 0;
-            width: 12vw; /* Clickable area is 12% of the screen edge */
+            width: 15vw; 
             height: 100vh;
             z-index: 20;
             cursor: pointer;
@@ -60,67 +85,83 @@
         #left-door-zone { left: 0; }
         #right-door-zone { right: 0; }
 
-        /* Subtle darkening effect when closed */
+        /* --- 4. Dynamic Door Shadows --- */
         .door-shadow {
             position: absolute;
-            top: 0; width: 100%; height: 100%;
-            background: linear-gradient(to right, rgba(0,0,0,0.9), transparent);
+            top: 0; 
+            width: 40vw; /* Covers a good chunk of the screen side */
+            height: 100vh;
             opacity: 0;
-            transition: opacity 0.2s ease-in-out;
             pointer-events: none;
+            z-index: 10;
         }
-        #right-door-zone .door-shadow {
-            background: linear-gradient(to left, rgba(0,0,0,0.9), transparent);
+
+        #left-shadow {
+            left: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.95) 20%, transparent);
+        }
+
+        #right-shadow {
+            right: 0;
+            background: linear-gradient(to left, rgba(0,0,0,0.95) 20%, transparent);
         }
 
     </style>
 </head>
 <body>
 
-    <div id="office-panorama">
-        
-        <div id="left-panel" class="task-panel">
-            <h2 style="color: #ff4444; margin-bottom: 10px;">Deporter-3000</h2>
-            <p style="color: #aaa;">[System Offline]</p>
-            <p style="font-size: 0.8rem; margin-top: 10px;">Waiting for connection to ../night1-sys/tasks.js...</p>
-        </div>
+    <div id="office-panorama"></div>
 
-        <div id="right-panel" class="task-panel">
-            <h2 style="color: #ff4444; margin-bottom: 10px;">Missile Launcher 900</h2>
-            <p style="color: #aaa;">[System Offline]</p>
-            <p style="font-size: 0.8rem; margin-top: 10px;">Waiting for connection to ../night1-sys/tasks.js...</p>
-        </div>
-
+    <div id="left-panel" class="task-panel">
+        <div class="tab-label">DEP-3000</div>
+        <h2 style="color: #ff4444; margin-bottom: 10px;">Deportations</h2>
+        <p style="color: #aaa;">[System Offline]</p>
     </div>
 
-    <div id="left-door-zone" class="door-zone" onclick="toggleDoor('left')">
-        <div id="left-shadow" class="door-shadow"></div>
+    <div id="right-panel" class="task-panel">
+        <div class="tab-label">ML-900</div>
+        <h2 style="color: #ff4444; margin-bottom: 10px;">Missile Strike</h2>
+        <p style="color: #aaa;">[System Offline]</p>
     </div>
-    
-    <div id="right-door-zone" class="door-zone" onclick="toggleDoor('right')">
-        <div id="right-shadow" class="door-shadow"></div>
-    </div>
+
+    <div id="left-shadow" class="door-shadow"></div>
+    <div id="right-shadow" class="door-shadow"></div>
+
+    <div id="left-door-zone" class="door-zone" onclick="toggleDoor('left')"></div>
+    <div id="right-door-zone" class="door-zone" onclick="toggleDoor('right')"></div>
 
     <script>
-        // --- Panning Logic ---
+        // --- Core Variables ---
         const panorama = document.getElementById('office-panorama');
-        const maxPan = window.innerWidth * 0.5; // We have 50vw of extra image to pan across
+        const leftShadow = document.getElementById('left-shadow');
+        const rightShadow = document.getElementById('right-shadow');
+        
+        const maxPan = window.innerWidth * 0.5; 
+        let leftDoorClosed = false;
+        let rightDoorClosed = false;
 
+        // --- Panning & Dynamic Shadow Logic ---
         document.addEventListener('mousemove', (e) => {
             const mouseX = e.clientX;
             const screenWidth = window.innerWidth;
+            const percentage = mouseX / screenWidth; // 0 (left) to 1 (right)
             
-            // Find out what percentage of the screen the mouse is at (0 to 1)
-            const percentage = mouseX / screenWidth;
-            
-            // Move the background the opposite direction of the mouse
+            // 1. Move the room background
             const panAmount = -(percentage * maxPan);
             panorama.style.transform = `translateX(${panAmount}px)`;
+
+            // 2. Dynamically calculate shadow opacity based on looking direction
+            if (leftDoorClosed) {
+                // Fades out entirely once you look past the middle (0.5)
+                leftShadow.style.opacity = Math.max(0, 1 - (percentage * 2)); 
+            }
+            if (rightDoorClosed) {
+                // Fades in starting from the middle (0.5) to the right edge (1.0)
+                rightShadow.style.opacity = Math.max(0, (percentage - 0.5) * 2);
+            }
         });
 
         // --- Door Audio & State Logic ---
-        // (We will eventually move the logic part to power_doors.js, but keeping it here for visual testing)
-        
         const openSounds = [
             new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
             new Audio('../Sounds/soundreality-opening-door-411632.mp3')
@@ -131,27 +172,30 @@
             new Audio('../Sounds/freesound_community-door-close-79921.mp3')
         ];
 
-        let leftDoorClosed = false;
-        let rightDoorClosed = false;
-
         function playRandomSound(soundArray) {
             const randomIndex = Math.floor(Math.random() * soundArray.length);
             const sound = soundArray[randomIndex];
-            sound.currentTime = 0; // Resets audio so it can play rapidly if spammed
-            sound.play().catch(e => console.log("Audio block: Click the screen first!", e));
+            sound.currentTime = 0; 
+            sound.play().catch(e => console.log("Audio block:", e));
         }
 
-        // Global function so other scripts can eventually see it
         window.toggleDoor = function(side) {
             if (side === 'left') {
                 leftDoorClosed = !leftDoorClosed;
                 playRandomSound(leftDoorClosed ? closeSounds : openSounds);
-                document.getElementById('left-shadow').style.opacity = leftDoorClosed ? '1' : '0';
+                
+                // If opening, immediately kill the shadow
+                if (!leftDoorClosed) leftShadow.style.opacity = 0;
+                
             } else if (side === 'right') {
                 rightDoorClosed = !rightDoorClosed;
                 playRandomSound(rightDoorClosed ? closeSounds : openSounds);
-                document.getElementById('right-shadow').style.opacity = rightDoorClosed ? '1' : '0';
+                
+                if (!rightDoorClosed) rightShadow.style.opacity = 0;
             }
+            
+            // Note: We don't manually set opacity to 1 here anymore, 
+            // the mousemove event will instantly catch it and calculate the correct fade!
         };
     </script>
 </body>
