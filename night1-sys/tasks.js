@@ -207,7 +207,6 @@ function launchConfetti() {
         const duration = Math.random() * 3 + 2; // 2 to 5 seconds fall time
         const delay = Math.random() * 1.5; // Random start delay
 
-        // Use Web Animations API for smooth, dynamic particle dropping
         confetti.animate([
             { transform: `translate3d(0, 0, 0) rotate(0deg)`, opacity: 1 },
             { transform: `translate3d(${Math.random() * 200 - 100}px, 100vh, 0) rotate(${Math.random() * 720}deg)`, opacity: 0 }
@@ -218,7 +217,6 @@ function launchConfetti() {
             fill: 'forwards'
         });
 
-        // Cleanup element after it falls
         setTimeout(() => confetti.remove(), (duration + delay) * 1000 + 100);
     }
 }
@@ -258,7 +256,14 @@ function triggerWin() {
     const clockChime = new Audio('../Sounds/li-bing-tower-clock-chimewestminster-187254.mp3');
     const confettiCheer = new Audio('../Sounds/u_jspnqv1glx-1gift-confetti-447240.mp3');
 
-    // 4. Execute Sequence
+    // 4. Trigger Auto-Save! (Make sure saveSystem.js is linked in night1.html)
+    if (typeof window.completeNight === 'function') {
+        window.completeNight(1); // Tells the system Night 1 is done
+    } else {
+        console.warn("Save system not found. Make sure saveSystem.js is linked in your HTML.");
+    }
+
+    // 5. Execute Sequence
     setTimeout(() => { 
         fadeOutDiv.style.opacity = '1'; 
         clockChime.play().catch(e => console.log("Audio block:", e));
@@ -268,5 +273,11 @@ function triggerWin() {
         winText.style.opacity = '1'; 
         confettiCheer.play().catch(e => console.log("Audio block:", e));
         launchConfetti(); // Trigger the visual confetti effect
-    }, 2000); // Cheer and visual confetti play right as the text appears
+        
+        // Redirect back to title screen 15 seconds after the text appears
+        setTimeout(() => { 
+            window.location.href = '../title.html'; 
+        }, 15000);
+        
+    }, 2000); 
 }
