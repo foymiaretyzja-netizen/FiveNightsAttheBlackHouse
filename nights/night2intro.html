@@ -17,8 +17,31 @@
             margin: 0;
             overflow: hidden;
             text-align: center;
+            user-select: none;
         }
 
+        /* The interactive click screen */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #aaa;
+            animation: slowPulse 2s infinite;
+            transition: opacity 1s ease-in-out;
+        }
+
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* The story text */
         #intro-text {
             font-size: 2rem;
             opacity: 0; /* Starts invisible */
@@ -31,43 +54,63 @@
 </head>
 <body>
 
+    <audio id="intro-audio" src="../Sounds/alesiadavina-horror-sound-lurking-horror-monster-189948.mp3"></audio>
+
+    <div id="start-screen">[Click to continue to night2]</div>
     <div id="intro-text"></div>
 
     <script>
+        const startScreen = document.getElementById('start-screen');
         const textElement = document.getElementById('intro-text');
+        const introAudio = document.getElementById('intro-audio');
         
         // The dialogue sequences
         const message1 = "Must was not the only one infected.";
         const message2 = "Keep an eye on the guest room.<br>If the door is wide open, be prepared.";
 
-        // --- Sequence Timing ---
+        // --- Trigger Sequence on Click ---
+        startScreen.addEventListener('click', function() {
+            
+            // 1. Play the audio immediately
+            introAudio.play().catch(e => console.log("Audio play failed:", e));
 
-        // 1. Fade in Message 1
-        setTimeout(() => {
-            textElement.innerHTML = message1;
-            textElement.style.opacity = '1';
-        }, 1000); 
+            // 2. Fade out the start screen
+            this.style.opacity = '0';
+            
+            // Wait 1 second for the start screen to fade out, then begin text
+            setTimeout(() => {
+                this.remove(); // Get it out of the way
 
-        // 2. Fade out Message 1
-        setTimeout(() => {
-            textElement.style.opacity = '0';
-        }, 5000); 
+                // 3. Fade in Message 1
+                setTimeout(() => {
+                    textElement.innerHTML = message1;
+                    textElement.style.opacity = '1';
+                }, 500); 
 
-        // 3. Fade in Message 2
-        setTimeout(() => {
-            textElement.innerHTML = message2;
-            textElement.style.opacity = '1';
-        }, 7000); 
+                // 4. Fade out Message 1
+                setTimeout(() => {
+                    textElement.style.opacity = '0';
+                }, 4500); 
 
-        // 4. Fade out Message 2
-        setTimeout(() => {
-            textElement.style.opacity = '0';
-        }, 12000); 
+                // 5. Fade in Message 2
+                setTimeout(() => {
+                    textElement.innerHTML = message2;
+                    textElement.style.opacity = '1';
+                }, 6500); 
 
-        // 5. Redirect to Night 2
-        setTimeout(() => {
-            window.location.href = 'night2.html';
-        }, 15000); 
+                // 6. Fade out Message 2
+                setTimeout(() => {
+                    textElement.style.opacity = '0';
+                }, 11500); 
+
+                // 7. Redirect to Night 2
+                setTimeout(() => {
+                    window.location.href = 'night2.html';
+                }, 14000); 
+
+            }, 1000); // 1 second delay matches the CSS transition time
+            
+        }, { once: true }); // Ensures this only fires the very first time they click
     </script>
 
 </body>
