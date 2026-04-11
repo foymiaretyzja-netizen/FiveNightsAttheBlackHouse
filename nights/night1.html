@@ -28,7 +28,7 @@
             transition: transform 0.1s ease-out; 
         }
 
-        /* --- 2. Hover Task Tabs (Slide up from bottom) --- */
+        /* --- 2. Hover Task Tabs --- */
         .task-panel {
             position: absolute;
             bottom: 0;
@@ -39,13 +39,11 @@
             border-bottom: none;
             border-radius: 15px 15px 0 0;
             padding: 20px;
-            z-index: 30; /* Keep high so they overlap everything */
-            
-            /* Retracts instantly when mouse leaves */
+            z-index: 30; 
+            transform: translateY(150%); 
             transition: transform 0.3s ease 0s; 
         }
 
-        /* The little visual tab that sticks up */
         .tab-label {
             text-align: center;
             font-size: 1.2rem;
@@ -56,18 +54,11 @@
             pointer-events: none;
         }
 
-        #left-panel { 
-            left: 8vw; 
-            transform: translateY(85%); /* Hides most of the panel */
-        }
-        
-        #right-panel { 
-            right: 8vw; 
-            transform: translateY(85%); 
-        }
+        #left-panel { left: 8vw; }
+        #right-panel { right: 8vw; }
 
-        /* Pulls out after 0.5s of hovering */
-        #left-panel:hover, #right-panel:hover {
+        .task-panel.is-visible { transform: translateY(85%); }
+        .task-panel.is-visible:hover {
             transform: translateY(0);
             transition: transform 0.3s ease 0.5s; 
         }
@@ -89,7 +80,7 @@
         .door-shadow {
             position: absolute;
             top: 0; 
-            width: 40vw; /* Covers a good chunk of the screen side */
+            width: 25vw; 
             height: 100vh;
             opacity: 0;
             pointer-events: none;
@@ -98,12 +89,57 @@
 
         #left-shadow {
             left: 0;
-            background: linear-gradient(to right, rgba(0,0,0,0.95) 20%, transparent);
+            background: linear-gradient(to right, rgba(0,0,0,0.95) 10%, transparent);
         }
 
         #right-shadow {
             right: 0;
-            background: linear-gradient(to left, rgba(0,0,0,0.95) 20%, transparent);
+            background: linear-gradient(to left, rgba(0,0,0,0.95) 10%, transparent);
+        }
+
+        /* --- 5. NEW: Camera Button & Monitor Overlay --- */
+        #camera-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 60; /* Keeps it above everything, even the open monitor */
+            transition: background 0.2s, border 0.2s;
+        }
+
+        #camera-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid #fff;
+        }
+
+        #camera-btn::after {
+            content: "v";
+            display: block;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #aaa;
+            line-height: 40px;
+            font-family: sans-serif;
+            transform: scaleY(0.5); /* Flattens the 'v' to look like a double arrow or grip */
+        }
+
+        #camera-monitor {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #111; /* Dark gray placeholder for now */
+            z-index: 50;
+            transform: translateY(100%); /* Hides it completely off the bottom of the screen */
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); /* Snappy FNAF-style slide */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
     </style>
@@ -126,42 +162,63 @@
 
     <div id="left-shadow" class="door-shadow"></div>
     <div id="right-shadow" class="door-shadow"></div>
-
     <div id="left-door-zone" class="door-zone" onclick="toggleDoor('left')"></div>
     <div id="right-door-zone" class="door-zone" onclick="toggleDoor('right')"></div>
+
+    <div id="camera-btn" onclick="toggleCamera()"></div>
+
+    <div id="camera-monitor">
+        <h1 style="color: #444; text-shadow: 0 0 10px #000;">[CAMERA SYSTEM OFFLINE]</h1>
+    </div>
 
     <script>
         // --- Core Variables ---
         const panorama = document.getElementById('office-panorama');
         const leftShadow = document.getElementById('left-shadow');
         const rightShadow = document.getElementById('right-shadow');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        const cameraMonitor = document.getElementById('camera-monitor');
         
         const maxPan = window.innerWidth * 0.5; 
         let leftDoorClosed = false;
         let rightDoorClosed = false;
+        let isCameraOpen = false; // Tracks monitor state
 
-        // --- Panning & Dynamic Shadow Logic ---
+        // --- Panning & Dynamic Shadow/UI Logic ---
         document.addEventListener('mousemove', (e) => {
+            if (isCameraOpen) return; // Stop panning while looking at the cameras
+
             const mouseX = e.clientX;
             const screenWidth = window.innerWidth;
-            const percentage = mouseX / screenWidth; // 0 (left) to 1 (right)
+            const percentage = mouseX / screenWidth; 
             
-            // 1. Move the room background
             const panAmount = -(percentage * maxPan);
             panorama.style.transform = `translateX(${panAmount}px)`;
 
-            // 2. Dynamically calculate shadow opacity based on looking direction
+            // Tab Visibility Logic 
+            if (percentage < 0.35) {
+                leftPanel.classList.add('is-visible');
+            } else {
+                leftPanel.classList.remove('is-visible');
+            }
+
+            if (percentage > 0.65) {
+                rightPanel.classList.add('is-visible');
+            } else {
+                rightPanel.classList.remove('is-visible');
+            }
+
+            // Shadow Logic
             if (leftDoorClosed) {
-                // Fades out entirely once you look past the middle (0.5)
-                leftShadow.style.opacity = Math.max(0, 1 - (percentage * 2)); 
+                leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
             }
             if (rightDoorClosed) {
-                // Fades in starting from the middle (0.5) to the right edge (1.0)
-                rightShadow.style.opacity = Math.max(0, (percentage - 0.5) * 2);
+                rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
             }
         });
 
-        // --- Door Audio & State Logic ---
+        // --- Door Logic ---
         const openSounds = [
             new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
             new Audio('../Sounds/soundreality-opening-door-411632.mp3')
@@ -180,22 +237,30 @@
         }
 
         window.toggleDoor = function(side) {
+            if (isCameraOpen) return; // Can't touch doors while on cameras
+
             if (side === 'left') {
                 leftDoorClosed = !leftDoorClosed;
                 playRandomSound(leftDoorClosed ? closeSounds : openSounds);
-                
-                // If opening, immediately kill the shadow
                 if (!leftDoorClosed) leftShadow.style.opacity = 0;
-                
             } else if (side === 'right') {
                 rightDoorClosed = !rightDoorClosed;
                 playRandomSound(rightDoorClosed ? closeSounds : openSounds);
-                
                 if (!rightDoorClosed) rightShadow.style.opacity = 0;
             }
-            
-            // Note: We don't manually set opacity to 1 here anymore, 
-            // the mousemove event will instantly catch it and calculate the correct fade!
+        };
+
+        // --- NEW: Camera Toggle Logic ---
+        window.toggleCamera = function() {
+            isCameraOpen = !isCameraOpen;
+            if (isCameraOpen) {
+                cameraMonitor.style.transform = 'translateY(0)'; // Slide up
+                // Hide side panels instantly if they were peeking
+                leftPanel.classList.remove('is-visible');
+                rightPanel.classList.remove('is-visible');
+            } else {
+                cameraMonitor.style.transform = 'translateY(100%)'; // Slide down
+            }
         };
     </script>
 </body>
