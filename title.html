@@ -12,36 +12,58 @@
             color: #fff; 
             font-family: 'Courier New', Courier, monospace; 
             overflow: hidden; 
-            user-select: none; /* Prevents dragging text/images */
+            user-select: none; 
         }
 
-        /* The Background Image with Jitter and Flicker */
+        /* 1. The Background Image with Jitter and Flicker */
         #bg-container {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
             background-image: url('StoryScenes/JiuN7.jpg'); 
             background-size: cover;
             background-position: center;
-            opacity: 0; /* Starts hidden for fade-in */
-            /* Jitter is now set to an 8 second loop */
+            opacity: 0; 
             animation: fadeIn 3s forwards, glitchFlicker 5s infinite, jitter 8s infinite;
             z-index: 1;
         }
 
-        /* Static TV Overlay (Scanlines) */
-        #static-overlay {
+        /* 2. True Animated TV Static (Fuzz) */
+        #static-noise {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 0, 0, 0.15),
-                rgba(0, 0, 0, 0.15) 2px,
-                transparent 2px,
-                transparent 4px
-            );
-            pointer-events: none; /* Lets you click through the static to the buttons */
+            /* Uses a generated SVG noise texture */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.15; /* Adjust this to make the snow lighter or darker */
+            pointer-events: none; 
             z-index: 10;
-            opacity: 0.6;
+            animation: fuzzShift 0.2s infinite linear;
+        }
+
+        /* 3. CRT Scanlines (Tight horizontal stripes) */
+        #scanlines {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.2) 50%,
+                rgba(0,0,0,0.2)
+            );
+            background-size: 100% 4px; /* Size of the scanlines */
+            pointer-events: none;
+            z-index: 11;
+        }
+
+        /* 4. Rolling Tracking Line */
+        #tracking-line {
+            position: absolute;
+            top: -10%; left: 0; width: 100vw; height: 20px;
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 20px rgba(0,0,0,0.6);
+            pointer-events: none;
+            z-index: 12;
+            animation: rollDown 6s linear infinite;
         }
 
         /* --- Animations --- */
@@ -49,7 +71,6 @@
             to { opacity: 1; }
         }
 
-        /* Random opacity drops to simulate dying lights */
         @keyframes glitchFlicker {
             0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
             20%, 24%, 55% { opacity: 0.6; }
@@ -59,13 +80,24 @@
             82% { opacity: 1; }
         }
 
-        /* Stays still for 96% of the 8 seconds, then violently jitters for the last fraction */
         @keyframes jitter {
             0%, 96% { transform: translate(0, 0); }
             97% { transform: translate(-2px, 1px); }
             98% { transform: translate(2px, -2px); }
             99% { transform: translate(-1px, 2px); }
             100% { transform: translate(0, 0); }
+        }
+
+        /* Rapidly shifts the background position of the noise to animate it */
+        @keyframes fuzzShift {
+            0% { background-position: 0 0; }
+            100% { background-position: 100% 100%; }
+        }
+
+        /* Moves the thick tracking line down the screen */
+        @keyframes rollDown {
+            0% { top: -10%; }
+            100% { top: 110%; }
         }
 
         /* --- UI Elements --- */
@@ -77,10 +109,9 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
-            align-items: flex-start; /* Aligns everything to the left */
+            align-items: flex-start; 
         }
 
-        /* Title */
         h1 {
             font-size: 3.5rem;
             line-height: 1.2;
@@ -89,7 +120,6 @@
             max-width: 600px;
         }
 
-        /* Menu Buttons */
         .menu-btn {
             display: block;
             background: transparent;
@@ -103,19 +133,17 @@
             text-shadow: 2px 2px 4px #000;
         }
 
-        /* Hover effect pushes the button slightly right and makes it glow */
         .menu-btn:hover {
             color: #ccc;
             text-shadow: 0 0 15px #fff;
             padding-left: 10px; 
         }
 
-        /* Credits Display Box */
         #credits-display {
-            margin-top: auto; /* Pushes it further down */
+            margin-top: auto; 
             font-size: 1.2rem;
             color: #aaa;
-            opacity: 0; /* Starts hidden */
+            opacity: 0; 
             transition: opacity 0.5s ease-in-out;
             text-shadow: 1px 1px 2px #000;
         }
@@ -124,7 +152,9 @@
 <body>
 
     <div id="bg-container"></div>
-    <div id="static-overlay"></div>
+    <div id="static-noise"></div>
+    <div id="scanlines"></div>
+    <div id="tracking-line"></div>
 
     <div id="ui-layer">
         <h1>Five Nights<br>at the Black House</h1>
@@ -140,17 +170,14 @@
     </div>
 
     <script>
-        // Start Game Redirect
         function startGame() {
             window.location.href = 'night1.html'; 
         }
 
-        // Placeholder for the Save/Import logic
         function comingSoon() {
             alert("Data management logic will be implemented here later.");
         }
 
-        // Toggles the credits text on and off
         function toggleCredits() {
             const credits = document.getElementById('credits-display');
             if (credits.style.opacity === '1') {
