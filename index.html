@@ -9,6 +9,32 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { background-color: #000; color: #fff; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
 
+        /* --- NEW: Start Screen --- */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Sits on top of everything else */
+            cursor: pointer;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #start-text {
+            font-size: 1.5rem;
+            color: #aaa;
+            animation: slowPulse 2s infinite;
+            user-select: none;
+        }
+
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
         /* Fullscreen Image Container */
         #intro-container { position: relative; width: 100vw; height: 100vh; }
 
@@ -63,12 +89,15 @@
             color: #fff;
             opacity: 0; /* Starts hidden */
             cursor: pointer;
-            user-select: none; /* Prevents text highlighting when holding */
-            animation: introduceSkip 5s ease-in-out 2s forwards; /* 5s animation, 2s delay */
-            transition: text-shadow 1.5s linear, color 1.5s linear; /* Smooth hold effect */
+            user-select: none;
+            transition: text-shadow 1.5s linear, color 1.5s linear;
         }
 
-        /* 3 slow blinks, then settles at 30% opacity */
+        /* Added via JS only AFTER the start screen is clicked */
+        .show-skip {
+            animation: introduceSkip 5s ease-in-out 2s forwards; 
+        }
+
         @keyframes introduceSkip {
             0% { opacity: 0; }
             15% { opacity: 0.8; }
@@ -79,17 +108,20 @@
             100% { opacity: 0.3; } 
         }
 
-        /* Class added via JS when the player is holding the button */
         #skip-indicator.holding {
-            opacity: 1 !important; /* Overrides the faded state */
+            opacity: 1 !important;
             color: #fff;
-            text-shadow: 0 0 15px #fff, 0 0 30px #fff; /* Glows while holding */
+            text-shadow: 0 0 15px #fff, 0 0 30px #fff; 
         }
     </style>
 </head>
 <body>
 
-    <audio id="bg-music" src="Sounds/universfield-horror-background-atmosphere-06-199279.mp3" loop autoplay></audio>
+    <audio id="bg-music" src="Sounds/universfield-horror-background-atmosphere-06-199279.mp3" loop></audio>
+
+    <div id="start-screen">
+        <div id="start-text">[Click anywhere to start]</div>
+    </div>
 
     <div id="intro-container">
         <div id="layer1" class="bg-image active"></div>
@@ -103,17 +135,7 @@
     </div>
 
     <script>
-        // --- 0. Audio Playback Logic ---
-        // Browsers block autoplay until the user interacts with the page.
-        // This ensures the audio starts the moment they click anywhere (like trying to skip).
-        document.body.addEventListener("click", () => {
-            const bgMusic = document.getElementById("bg-music");
-            if (bgMusic.paused) {
-                bgMusic.play().catch(e => console.log("Audio play failed:", e));
-            }
-        }, { once: true });
-
-        // --- 1. Image Fading Logic ---
+        // --- Game Logic Variables ---
         const images = [
             'StoryScenes/Tehran.jpg', 
             'StoryScenes/SE3EN.jpg',  
@@ -125,8 +147,37 @@
         const layer2 = document.getElementById('layer2');
         let activeLayer = 1;
 
-        layer1.style.backgroundImage = `url('${images[0]}')`;
+        const storyParts = [
+            "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows.",
+            "Spread across the mahogany desk are the crushing burdens of a besieged presidency: a stack of urgent deportation orders and a tactical terminal demanding missile strikes against Irun.",
+            "But the true nightmare prowls just outside the thick oak doors. The Liberalist Virus of 2022 has mutated Elong Must and Charrlie Hirk from trusted allies into corrupted, cybernetic husks.",
+            "Now, they drag themselves through the velvet-lined corridors of the West Wing, hunting for the last uninfected mind to consume."
+        ];
 
+        const typewriterElement = document.getElementById('typewriter');
+        let currentPart = 0;
+        let charIndex = 0;
+
+        // --- 1. Start Screen & Initialization Logic ---
+        document.getElementById('start-screen').addEventListener('click', function() {
+            // 1. Play Audio
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
+
+            // 2. Fade out and remove the start screen
+            this.style.opacity = '0';
+            setTimeout(() => this.remove(), 1000);
+
+            // 3. Kick off the visuals and text
+            layer1.style.backgroundImage = `url('${images[0]}')`;
+            setInterval(changeImage, 6000); 
+            setTimeout(typeWriter, 1000);
+
+            // 4. Start the "Hold to Skip" animation timer
+            document.getElementById('skip-indicator').classList.add('show-skip');
+        }, { once: true }); // Ensure this only triggers on the very first click
+
+        // --- 2. Image Fading Logic ---
         function changeImage() {
             currentImageIndex = (currentImageIndex + 1) % images.length;
             const nextImage = `url('${images[currentImageIndex]}')`;
@@ -143,20 +194,8 @@
                 activeLayer = 1;
             }
         }
-        setInterval(changeImage, 6000); 
 
-        // --- 2. Segmented Typewriter Logic ---
-        const storyParts = [
-            "The Oval Office of the Black House is a suffocating tomb, lit only by a sputtering fluorescent bulb that casts long, jittery shadows.",
-            "Spread across the mahogany desk are the crushing burdens of a besieged presidency: a stack of urgent deportation orders and a tactical terminal demanding missile strikes against Irun.",
-            "But the true nightmare prowls just outside the thick oak doors. The Liberalist Virus of 2022 has mutated Elong Must and Charrlie Hirk from trusted allies into corrupted, cybernetic husks.",
-            "Now, they drag themselves through the velvet-lined corridors of the West Wing, hunting for the last uninfected mind to consume."
-        ];
-
-        const typewriterElement = document.getElementById('typewriter');
-        let currentPart = 0;
-        let charIndex = 0;
-
+        // --- 3. Segmented Typewriter Logic ---
         function typeWriter() {
             if (currentPart < storyParts.length) {
                 let currentText = storyParts[currentPart];
@@ -179,18 +218,15 @@
                 }, 1000);
             }
         }
-        setTimeout(typeWriter, 1000);
 
-        // --- 3. Hold-to-Skip Logic ---
+        // --- 4. Hold-to-Skip Logic ---
         const skipBtn = document.getElementById('skip-indicator');
         let skipTimer;
-        const holdTimeToSkip = 1500; // 1.5 seconds
+        const holdTimeToSkip = 1500;
 
         function startSkip(e) {
-            e.preventDefault(); // Prevents weird mobile behaviors
+            e.preventDefault();
             skipBtn.classList.add('holding');
-            
-            // Start the timer to redirect
             skipTimer = setTimeout(() => {
                 window.location.href = 'title.html';
             }, holdTimeToSkip);
@@ -198,18 +234,13 @@
 
         function cancelSkip() {
             skipBtn.classList.remove('holding');
-            // If they let go early, cancel the redirect timer
             clearTimeout(skipTimer);
         }
 
-        // Mouse Events (Desktop)
         skipBtn.addEventListener('mousedown', startSkip);
         window.addEventListener('mouseup', cancelSkip); 
-        
-        // Touch Events (Mobile support)
         skipBtn.addEventListener('touchstart', startSkip);
         window.addEventListener('touchend', cancelSkip);
     </script>
-
 </body>
 </html>
