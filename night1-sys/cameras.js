@@ -1,4 +1,4 @@
-// --- cameras.js ---
+// --- night1-sys/cameras.js ---
 
 const cameraNav = document.getElementById('camera-nav');
 const cameraFeed = document.getElementById('camera-feed');
@@ -6,7 +6,7 @@ const staticFlash = document.getElementById('static-flash');
 const charrlieSprite = document.getElementById('charrlie-sprite');
 const elongSprite = document.getElementById('elong-sprite');
 
-// Renamed these variables so they don't clash with the ones in night1.html!
+// Using renamed variables to avoid collisions with night1.html
 const camUIMonitor = document.getElementById('camera-monitor');
 const camUILeftPanel = document.getElementById('left-panel');
 const camUIRightPanel = document.getElementById('right-panel');
@@ -27,14 +27,13 @@ const rooms = {
     'Storage': '../Scenes/Storage.jpg'
 };
 
-window.aiPositions = {
-    charrlie: 'Guest Room',
-    elong: 'Storage'
-};
-
+// Start setting current camera
 let currentCamera = 'Guest Room';
 
 function setupCameraButtons() {
+    // Clear existing buttons to prevent duplicates
+    cameraNav.innerHTML = '<img id="camera-map-img" src="../night1-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">';
+    
     for (const roomName in rooms) {
         const btn = document.createElement('button');
         btn.className = 'cam-btn';
@@ -70,6 +69,9 @@ function triggerFlicker() {
     staticFlash.classList.add('is-switching');
 }
 
+/**
+ * UPDATED: Now checks window.aiPositions which are updated by ElongAI.js
+ */
 function switchCamera(roomName, playAudio = true) {
     if (playAudio) {
         playCameraSound();
@@ -79,25 +81,35 @@ function switchCamera(roomName, playAudio = true) {
     currentCamera = roomName;
     cameraFeed.style.backgroundImage = `url('${rooms[roomName]}')`;
 
-    charrlieSprite.style.display = (window.aiPositions.charrlie === roomName) ? 'block' : 'none';
-    elongSprite.style.display = (window.aiPositions.elong === roomName) ? 'block' : 'none';
+    // Toggle Elong Sprite based on his actual position in the AI script
+    if (window.aiPositions && window.aiPositions.elong === roomName) {
+        elongSprite.style.display = 'block';
+    } else {
+        elongSprite.style.display = 'none';
+    }
+
+    // Toggle Charrlie Sprite (Positions set in CharrlieAI.js later)
+    if (window.aiPositions && window.aiPositions.charrlie === roomName) {
+        charrlieSprite.style.display = 'block';
+    } else {
+        charrlieSprite.style.display = 'none';
+    }
 }
 
-// --- BULLETPROOF TOGGLE LOGIC ---
+// --- TOGGLE LOGIC ---
 window.toggleCamera = function() {
     window.isCameraOpen = !window.isCameraOpen;
     
     if (window.isCameraOpen) {
-        // Slide monitor up & hide task panels using the renamed variables
         camUIMonitor.style.transform = 'translateY(0)'; 
         camUILeftPanel.classList.remove('is-visible');
         camUIRightPanel.classList.remove('is-visible');
         
         playCameraSound();
         triggerFlicker();
+        // Refresh sprite positions when opening monitor
         switchCamera(currentCamera, false); 
     } else {
-        // Slide monitor down & stop audio
         camUIMonitor.style.transform = 'translateY(100%)'; 
         if (currentCamAudio) {
             currentCamAudio.pause();
