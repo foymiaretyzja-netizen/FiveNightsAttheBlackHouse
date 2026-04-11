@@ -15,6 +15,32 @@
             user-select: none; 
         }
 
+        /* --- NEW: Start Screen --- */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100; /* Ensure it sits on top of all UI and effects */
+            cursor: pointer;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #start-text {
+            font-size: 1.5rem;
+            color: #aaa;
+            animation: slowPulse 2s infinite;
+            user-select: none;
+        }
+
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
         /* 1. The Background Image with Jitter and Flicker */
         #bg-container {
             position: absolute;
@@ -151,6 +177,12 @@
 </head>
 <body>
 
+    <audio id="bg-music" src="Sounds/universfield-horror-background-atmosphere-156462.mp3" loop></audio>
+
+    <div id="start-screen">
+        <div id="start-text">[Click anywhere to start]</div>
+    </div>
+
     <div id="bg-container"></div>
     <div id="static-noise"></div>
     <div id="scanlines"></div>
@@ -170,6 +202,18 @@
     </div>
 
     <script>
+        // --- NEW: Start Screen & Audio Logic ---
+        document.getElementById('start-screen').addEventListener('click', function() {
+            // Play Audio
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
+
+            // Fade out and remove the start screen overlay
+            this.style.opacity = '0';
+            setTimeout(() => this.remove(), 1000);
+        }, { once: true }); // Triggers only on the very first click
+
+        // --- Original Menu Logic ---
         function startGame() {
             // Routing updated to point to the 'nights' folder
             window.location.href = 'nights/night1intro.html'; 
