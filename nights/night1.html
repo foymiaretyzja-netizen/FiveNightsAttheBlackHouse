@@ -63,6 +63,39 @@
             transition: transform 0.3s ease 0.5s; 
         }
 
+        /* --- NEW: Motion Sensor Tab (Top Middle) --- */
+        #motion-panel {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-85%);
+            width: 300px;
+            height: 140px;
+            background: rgba(5, 20, 5, 0.95);
+            border: 2px solid #00ff00;
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            padding: 15px;
+            z-index: 70;
+            transition: transform 0.3s;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.2);
+        }
+        #motion-panel:hover { transform: translateX(-50%) translateY(0); }
+        
+        .sensor-btn {
+            background: #004400;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        .sensor-btn:disabled { opacity: 0.3; cursor: default; }
+        #sensor-display { margin-top: 10px; color: #00ff00; font-size: 1.1rem; }
+
         /* --- 3. Invisible Door Hitboxes --- */
         .door-zone {
             position: absolute;
@@ -72,7 +105,6 @@
             z-index: 20;
             cursor: pointer;
         }
-
         #left-door-zone { left: 0; }
         #right-door-zone { right: 0; }
 
@@ -86,18 +118,10 @@
             pointer-events: none;
             z-index: 10;
         }
+        #left-shadow { left: 0; background: linear-gradient(to right, rgba(0,0,0,0.95) 10%, transparent); }
+        #right-shadow { right: 0; background: linear-gradient(to left, rgba(0,0,0,0.95) 10%, transparent); }
 
-        #left-shadow {
-            left: 0;
-            background: linear-gradient(to right, rgba(0,0,0,0.95) 10%, transparent);
-        }
-
-        #right-shadow {
-            right: 0;
-            background: linear-gradient(to left, rgba(0,0,0,0.95) 10%, transparent);
-        }
-
-        /* --- 5. Camera Button & Monitor Overlay --- */
+        /* --- 5. Camera Button & Monitor --- */
         #camera-btn {
             position: absolute;
             bottom: 20px;
@@ -112,21 +136,9 @@
             z-index: 60; 
             transition: background 0.2s, border 0.2s;
         }
-
-        #camera-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid #fff;
-        }
-
         #camera-btn::after {
-            content: "v";
-            display: block;
-            text-align: center;
-            font-size: 1.5rem;
-            color: #aaa;
-            line-height: 40px;
-            font-family: sans-serif;
-            transform: scaleY(0.5); 
+            content: "v"; display: block; text-align: center; font-size: 1.5rem;
+            color: #aaa; line-height: 40px; font-family: sans-serif; transform: scaleY(0.5); 
         }
 
         #camera-monitor {
@@ -137,140 +149,51 @@
             z-index: 50;
             transform: translateY(100%); 
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- 6. Camera System Layout --- */
-        #camera-layout {
-            display: flex;
-            width: 100%;
-            height: 100%;
-            background: #050505;
-            padding: 40px;
-            gap: 30px;
-        }
+        /* Camera Feed Styles */
+        #camera-layout { display: flex; width: 100%; height: 100%; background: #050505; padding: 40px; gap: 30px; }
+        #camera-nav { flex: 0 0 280px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
+        #camera-screen { flex: 1; position: relative; border: 4px solid #333; background: #000; overflow: hidden; border-radius: 10px; }
+        #camera-feed { width: 100%; height: 100%; background-size: cover; background-position: center; }
+        #static-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #fff; opacity: 0; pointer-events: none; z-index: 20; }
+        
+        .ai-sprite { position: absolute; z-index: 5; display: none; }
+        #camera-screen .ai-sprite { bottom: 50px; height: 60%; }
+        #charrlie-sprite-office, #elong-sprite-office { height: 70%; bottom: 10%; z-index: 100; }
 
-        #camera-map-img {
-            width: 100%;
-            height: auto;
-            border: 2px solid #555;
-            margin-bottom: 10px;
-            filter: brightness(0.8) contrast(1.2);
-        }
-
-        #camera-nav {
-            flex: 0 0 280px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            gap: 10px;
-            overflow-y: auto;
-        }
-
-        .cam-btn {
-            background: #222;
-            color: #ccc;
-            border: 2px solid #555;
-            padding: 15px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1.2rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-align: left;
-            transition: 0.2s;
-        }
-
-        .cam-btn:hover, .cam-btn.active {
-            background: #555;
-            border-color: #fff;
-            color: #fff;
-        }
-
-        #camera-screen {
-            flex: 1;
-            position: relative;
-            border: 4px solid #333;
-            background: #000;
-            overflow: hidden;
-            border-radius: 10px;
-        }
-
-        #camera-feed {
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-        }
-
-        #crt-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 3px 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #static-flash {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #fff;
-            opacity: 0;
-            pointer-events: none;
-            z-index: 20;
-        }
-
+        .is-switching { animation: flashEffect 0.3s ease-out; }
         @keyframes flashEffect {
             0% { opacity: 0.9; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
             100% { opacity: 0; }
         }
-        .is-switching { animation: flashEffect 0.3s ease-out; }
-
-        /* Sprite styling for Camera and Office */
-        .ai-sprite {
-            position: absolute;
-            z-index: 5;
-            display: none; 
-        }
-
-        /* Camera Sprites */
-        #camera-screen .ai-sprite {
-            bottom: 50px;
-            height: 60%;
-        }
-        #charrlie-sprite { left: 20%; }
-        #elong-sprite { right: 20%; }
-
-        /* Office/Jumpscare Sprites */
-        #elong-sprite-office, #charrlie-sprite-office {
-            height: 70%;
-            bottom: 10%;
-            z-index: 100;
-        }
-
     </style>
 </head>
 <body>
 
     <div id="office-panorama"></div>
 
+    <div id="motion-panel">
+        <div style="font-size: 0.7rem; color: #00ff00; letter-spacing: 1px;">MOTION DETECTOR v1.0</div>
+        <div id="sensor-ui">
+            <p style="font-size: 0.8rem; margin: 5px 0;">Check which door?</p>
+            <button class="sensor-btn" onclick="runMotionScan('left')">LEFT</button>
+            <button class="sensor-btn" onclick="runMotionScan('right')">RIGHT</button>
+        </div>
+        <div id="sensor-display">READY</div>
+    </div>
+
     <div id="left-panel" class="task-panel">
         <div class="tab-label">DEP-3000</div>
         <h2 style="color: #ff4444; margin-bottom: 10px;">Deportations</h2>
-        <div id="dep-content">
-            <p id="dep-status" style="color: #aaa;">[System Offline - Load JS]</p>
-        </div>
+        <div id="dep-content"><p id="dep-status">[System Offline]</p></div>
     </div>
 
     <div id="right-panel" class="task-panel">
         <div class="tab-label">ML-900</div>
         <h2 style="color: #ff4444; margin-bottom: 10px;">Missile Strike</h2>
-        <div id="ml-content">
-            <p id="ml-status" style="color: #aaa;">[System Offline - Load JS]</p>
-        </div>
+        <div id="ml-content"><p id="ml-status">[System Offline]</p></div>
     </div>
 
     <div id="left-shadow" class="door-shadow"></div>
@@ -285,12 +208,10 @@
             <div id="camera-nav">
                 <img id="camera-map-img" src="../night1-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">
             </div>
-            
             <div id="camera-screen">
                 <div id="camera-feed"></div>
-                <img id="charrlie-sprite" class="ai-sprite" src="../night1-sys/sprites/Charrlie.png" alt="Charrlie">
-                <img id="elong-sprite" class="ai-sprite" src="../night1-sys/sprites/Elong.png" alt="Elong">
-                <div id="crt-overlay"></div>
+                <img id="charrlie-sprite" class="ai-sprite" src="../night1-sys/sprites/Charrlie.png">
+                <img id="elong-sprite" class="ai-sprite" src="../night1-sys/sprites/Elong.png">
                 <div id="static-flash"></div>
             </div>
         </div>
@@ -308,22 +229,16 @@
         
         const maxPan = window.innerWidth * 0.5; 
         
-        // Globals for AI and Cameras
         window.leftDoorClosed = false;
         window.rightDoorClosed = false;
         window.isCameraOpen = false;
         window.aiPositions = { charrlie: 'Guest Room', elong: 'Storage' };
 
-        // Panning Logic
         document.addEventListener('mousemove', (e) => {
             if (window.isCameraOpen) return; 
-
             const mouseX = e.clientX;
-            const screenWidth = window.innerWidth;
-            const percentage = mouseX / screenWidth; 
-            
-            const panAmount = -(percentage * maxPan);
-            panorama.style.transform = `translateX(${panAmount}px)`;
+            const percentage = mouseX / window.innerWidth; 
+            panorama.style.transform = `translateX(${(percentage * -maxPan)}px)`;
 
             if (percentage < 0.35) leftPanel.classList.add('is-visible');
             else leftPanel.classList.remove('is-visible');
@@ -335,41 +250,49 @@
             if (window.rightDoorClosed) rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
         });
 
-        // Door Audio
-        const openSounds = [
-            new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
-            new Audio('../Sounds/soundreality-opening-door-411632.mp3')
-        ];
-        const closeSounds = [
-            new Audio('../Sounds/dragon-studio-door-close-effect-382710.mp3'),
-            new Audio('../Sounds/freesound_community-door-close-79921.mp3')
-        ];
+        // Motion Sensor Logic
+        function runMotionScan(door) {
+            const display = document.getElementById('sensor-display');
+            const buttons = document.querySelectorAll('.sensor-btn');
+            
+            buttons.forEach(b => b.disabled = true);
+            display.innerText = "LOADING...";
+            display.style.color = "#ffff00";
 
-        function playRandomSound(soundArray) {
-            const sound = soundArray[Math.floor(Math.random() * soundArray.length)];
-            sound.currentTime = 0; 
-            sound.play().catch(e => console.log("Audio block:", e));
+            setTimeout(() => {
+                let found = false;
+                // Target rooms for the doors
+                const targetRoom = (door === 'left') ? 'Presidential Left Door' : 'Presidential Right Door';
+                
+                if (window.aiPositions.elong === targetRoom || window.aiPositions.charrlie === targetRoom) {
+                    found = true;
+                }
+
+                display.innerText = found ? "PRESENT" : "ABSENT";
+                display.style.color = found ? "#ff0000" : "#00ff00";
+
+                // Auto-reset after 3 seconds
+                setTimeout(() => {
+                    display.innerText = "READY";
+                    display.style.color = "#00ff00";
+                    buttons.forEach(b => b.disabled = false);
+                }, 3000);
+            }, 5000); // 5s Loading time
         }
 
         window.toggleDoor = function(side) {
             if (window.isCameraOpen) return; 
-
             if (side === 'left') {
                 window.leftDoorClosed = !window.leftDoorClosed;
-                playRandomSound(window.leftDoorClosed ? closeSounds : openSounds);
                 if (!window.leftDoorClosed) leftShadow.style.opacity = 0;
-            } else if (side === 'right') {
+            } else {
                 window.rightDoorClosed = !window.rightDoorClosed;
-                playRandomSound(window.rightDoorClosed ? closeSounds : openSounds);
                 if (!window.rightDoorClosed) rightShadow.style.opacity = 0;
             }
         };
     </script>
 
     <script src="../night1-sys/cameras.js"></script>
-    <script src="../night1-sys/deportation.js"></script>
-    <script src="../night1-sys/missile.js"></script>
     <script src="../night1-sys/ElongAI.js"></script>
-
 </body>
 </html>
