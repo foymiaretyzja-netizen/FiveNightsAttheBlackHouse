@@ -152,12 +152,21 @@
             gap: 30px;
         }
 
+        #camera-map-img {
+            width: 100%;
+            height: auto;
+            border: 2px solid #555;
+            margin-bottom: 10px;
+            filter: brightness(0.8) contrast(1.2);
+        }
+
         #camera-nav {
-            flex: 0 0 250px;
+            flex: 0 0 280px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            justify-content: center;
+            justify-content: flex-start;
+            gap: 10px;
+            overflow-y: auto;
         }
 
         .cam-btn {
@@ -262,7 +271,9 @@
 
     <div id="camera-monitor">
         <div id="camera-layout">
-            <div id="camera-nav"></div>
+            <div id="camera-nav">
+                <img id="camera-map-img" src="../night1-sys/sprites/Screenshot%202026-04-10%209.12.19%20PM.png" alt="Office Map">
+            </div>
             
             <div id="camera-screen">
                 <div id="camera-feed"></div>
@@ -337,16 +348,8 @@
             }
         };
 
-        window.toggleCamera = function() {
-            window.isCameraOpen = !window.isCameraOpen;
-            if (window.isCameraOpen) {
-                cameraMonitor.style.transform = 'translateY(0)'; 
-                leftPanel.classList.remove('is-visible');
-                rightPanel.classList.remove('is-visible');
-            } else {
-                cameraMonitor.style.transform = 'translateY(100%)'; 
-            }
-        };
+        // Note: The toggleCamera logic has been removed from here 
+        // because it is now securely handled inside cameras.js
     </script>
 
     <script src="../night1-sys/cameras.js"></script>
