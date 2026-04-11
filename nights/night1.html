@@ -63,6 +63,29 @@
             transition: transform 0.3s ease 0.5s; 
         }
 
+        /* --- NEW: Motion Sensor UI --- */
+        #motion-panel {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-85%); 
+            width: 250px;
+            height: 120px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #00ff00; 
+            border-top: none;
+            border-radius: 0 0 15px 15px;
+            padding: 10px;
+            z-index: 70;
+            transition: transform 0.3s;
+            text-align: center;
+        }
+        #motion-panel:hover {
+            transform: translateX(-50%) translateY(0);
+        }
+        .sensor-text { font-size: 0.8rem; color: #00ff00; margin-top: 5px; }
+        #sensor-status { font-weight: bold; font-size: 1.2rem; }
+
         /* --- 3. Invisible Door Hitboxes --- */
         .door-zone {
             position: absolute;
@@ -229,6 +252,14 @@
         }
         .is-switching { animation: flashEffect 0.3s ease-out; }
 
+        /* --- NEW: 5-Second Static for AI Movement --- */
+        @keyframes longFlashEffect {
+            0% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            80% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            100% { opacity: 0; }
+        }
+        .is-long-switching { animation: longFlashEffect 5s ease-out forwards; }
+
         /* Sprite styling for Camera and Office */
         .ai-sprite {
             position: absolute;
@@ -256,6 +287,12 @@
 <body>
 
     <div id="office-panorama"></div>
+
+    <div id="motion-panel">
+        <div class="sensor-text">DOOR MOTION SENSOR</div>
+        <div id="sensor-status" class="sensor-text">SCANNING...</div>
+        <div style="font-size: 0.6rem; color: #555;">(USES POWER)</div>
+    </div>
 
     <div id="left-panel" class="task-panel">
         <div class="tab-label">DEP-3000</div>
