@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Title Screen - Five Nights at the Black House</title>
+    <style>
+        /* CSS Reset & Basic Setup */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; 
+            user-select: none; /* Prevents dragging text/images */
+        }
+
+        /* The Background Image with Jitter and Flicker */
+        #bg-container {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-image: url('StoryScenes/JiuN7.jpg'); 
+            background-size: cover;
+            background-position: center;
+            opacity: 0; /* Starts hidden for fade-in */
+            /* Runs 3 animations: Fade in once, flicker infinitely, jitter infinitely */
+            animation: fadeIn 3s forwards, glitchFlicker 5s infinite, jitter 0.15s infinite;
+            z-index: 1;
+        }
+
+        /* Static TV Overlay (Scanlines) */
+        #static-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 2px,
+                transparent 2px,
+                transparent 4px
+            );
+            pointer-events: none; /* Lets you click through the static to the buttons */
+            z-index: 10;
+            opacity: 0.6;
+        }
+
+        /* --- Animations --- */
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        /* Random opacity drops to simulate dying lights */
+        @keyframes glitchFlicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.6; }
+            22% { opacity: 0.2; }
+            80% { opacity: 0.8; }
+            81% { opacity: 0.3; }
+            82% { opacity: 1; }
+        }
+
+        /* Micro-movements to make the screen feel unstable */
+        @keyframes jitter {
+            0% { transform: translate(0, 0); }
+            20% { transform: translate(-1px, 1px); }
+            40% { transform: translate(1px, -1px); }
+            60% { transform: translate(-1px, 2px); }
+            80% { transform: translate(2px, -1px); }
+            100% { transform: translate(0, 0); }
+        }
+
+        /* --- UI Elements --- */
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: 20;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start; /* Aligns everything to the left */
+        }
+
+        /* Title */
+        h1 {
+            font-size: 3.5rem;
+            line-height: 1.2;
+            text-shadow: 3px 3px 6px #000, 0 0 15px rgba(255, 255, 255, 0.3);
+            margin-bottom: 60px;
+            max-width: 600px;
+        }
+
+        /* Menu Buttons */
+        .menu-btn {
+            display: block;
+            background: transparent;
+            color: #fff;
+            border: none;
+            font-size: 2rem;
+            font-family: inherit;
+            margin-bottom: 25px;
+            cursor: pointer;
+            transition: color 0.2s, text-shadow 0.2s, padding-left 0.2s;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        /* Hover effect pushes the button slightly right and makes it glow */
+        .menu-btn:hover {
+            color: #ccc;
+            text-shadow: 0 0 15px #fff;
+            padding-left: 10px; 
+        }
+
+        /* Credits Display Box */
+        #credits-display {
+            margin-top: auto; /* Pushes it further down */
+            font-size: 1.2rem;
+            color: #aaa;
+            opacity: 0; /* Starts hidden */
+            transition: opacity 0.5s ease-in-out;
+            text-shadow: 1px 1px 2px #000;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bg-container"></div>
+    <div id="static-overlay"></div>
+
+    <div id="ui-layer">
+        <h1>Five Nights<br>at the Black House</h1>
+        
+        <button class="menu-btn" onclick="startGame()">Play</button>
+        <button class="menu-btn" onclick="comingSoon()">Save Data</button>
+        <button class="menu-btn" onclick="comingSoon()">Import Data</button>
+        <button class="menu-btn" onclick="toggleCredits()">Credits</button>
+
+        <div id="credits-display">
+            Directed by Solan; made by Gemini and grok.
+        </div>
+    </div>
+
+    <script>
+        // Start Game Redirect
+        function startGame() {
+            // This will look for your first playable night HTML file
+            window.location.href = 'night1.html'; 
+        }
+
+        // Placeholder for the Save/Import logic
+        function comingSoon() {
+            alert("Data management logic will be implemented here later.");
+        }
+
+        // Toggles the credits text on and off
+        function toggleCredits() {
+            const credits = document.getElementById('credits-display');
+            if (credits.style.opacity === '1') {
+                credits.style.opacity = '0';
+            } else {
+                credits.style.opacity = '1';
+            }
+        }
+    </script>
+</body>
+</html>
