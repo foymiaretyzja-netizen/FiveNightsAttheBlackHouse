@@ -2,6 +2,7 @@
 
 const btnDeport = document.getElementById('btn-deport');
 const btnMissile = document.getElementById('btn-missile');
+const btnCamera = document.getElementById('camera-btn'); // Grab the camera button
 
 // Task Progress Variables
 let deportCount = 0;
@@ -13,12 +14,45 @@ const MAX_MISSILES = 5;
 // AI Data Relay & State Variables
 window.lastMissileTime = Date.now();
 window.elongAngerMultiplier = 1.0; 
-window.isTaskActive = false; // Locks the camera while true
+window.isTaskActive = false; 
 
-// Helper: Disables/Enables buttons while a task is running
+// Timer Storage
+let activeTaskTimer = null;
+let activeTaskType = null; // 'deport' or 'missile'
+
+// Helper: Disables/Enables buttons while respecting max limits
 function setTaskButtonsDisabled(disabled) {
-    if (deportCount < MAX_DEPORT) btnDeport.disabled = disabled;
-    if (missileCount < MAX_MISSILES) btnMissile.disabled = disabled;
+    btnDeport.disabled = disabled || (deportCount >= MAX_DEPORT);
+    btnMissile.disabled = disabled || (missileCount >= MAX_MISSILES);
+}
+
+// --- Cancellation Logic ---
+window.cancelCurrentTask = function() {
+    if (activeTaskTimer) {
+        clearInterval(activeTaskTimer);
+        activeTaskTimer = null;
+        window.isTaskActive = false;
+        
+        // Reset Button UI
+        if (activeTaskType === 'deport') {
+            btnDeport.style.color = "#ccc";
+            btnDeport.innerText = `Deport liberals (${deportCount}/${MAX_DEPORT})`;
+        } else if (activeTaskType === 'missile') {
+            btnMissile.style.color = "#ccc";
+            btnMissile.innerText = `Send missiles to Irun (${missileCount}/${MAX_MISSILES})`;
+        }
+        
+        setTaskButtonsDisabled(false);
+        activeTaskType = null;
+        console.log("Task canceled by player movement!");
+    }
+};
+
+// Cancel tasks if the player opens the camera monitor
+if (btnCamera) {
+    btnCamera.addEventListener('click', () => {
+        window.cancelCurrentTask();
+    });
 }
 
 // --- Task 1: Deportation (5 Seconds) ---
@@ -27,18 +61,20 @@ btnDeport.addEventListener('click', () => {
     if (window.isTaskActive || deportCount >= MAX_DEPORT) return;
 
     window.isTaskActive = true;
+    activeTaskType = 'deport';
     setTaskButtonsDisabled(true);
-    btnDeport.style.color = "#ffaa00"; // Turn yellow to show it's working
+    btnDeport.style.color = "#ffaa00"; 
     
     let timeLeft = 5;
     btnDeport.innerText = `Processing... (${timeLeft}s)`;
 
-    const countdown = setInterval(() => {
+    activeTaskTimer = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
             btnDeport.innerText = `Processing... (${timeLeft}s)`;
         } else {
-            clearInterval(countdown);
+            clearInterval(activeTaskTimer);
+            activeTaskTimer = null;
             finishDeportation();
         }
     }, 1000);
@@ -47,9 +83,10 @@ btnDeport.addEventListener('click', () => {
 function finishDeportation() {
     deportCount++;
     window.isTaskActive = false;
+    activeTaskType = null;
     setTaskButtonsDisabled(false);
     
-    btnDeport.style.color = "#ccc"; // Reset color
+    btnDeport.style.color = "#ccc"; 
     btnDeport.innerText = `Deport liberals (${deportCount}/${MAX_DEPORT})`;
     
     if (deportCount >= MAX_DEPORT) {
@@ -68,24 +105,24 @@ btnMissile.addEventListener('click', () => {
     if (window.isTaskActive || missileCount >= MAX_MISSILES) return;
 
     window.isTaskActive = true;
+    activeTaskType = 'missile';
     setTaskButtonsDisabled(true);
     btnMissile.style.color = "#ffaa00"; 
     
-    // Reset Elong's patience immediately upon starting the sequence
     window.lastMissileTime = Date.now();
     window.elongAngerMultiplier = 1.0;
 
     let timeLeft = 10;
     btnMissile.innerText = `Preparing Launch... (${timeLeft}s)`;
 
-    const countdown = setInterval(() => {
+    activeTaskTimer = setInterval(() => {
         timeLeft--;
         if (timeLeft > 0) {
             btnMissile.innerText = `Preparing Launch... (${timeLeft}s)`;
-            // Keep resetting his timer so he doesn't get mad *during* the 10-second launch
             window.lastMissileTime = Date.now(); 
         } else {
-            clearInterval(countdown);
+            clearInterval(activeTaskTimer);
+            activeTaskTimer = null;
             finishMissile();
         }
     }, 1000);
@@ -94,13 +131,12 @@ btnMissile.addEventListener('click', () => {
 function finishMissile() {
     missileCount++;
     window.isTaskActive = false;
+    activeTaskType = null;
     setTaskButtonsDisabled(false);
     
     btnMissile.style.color = "#ccc";
     btnMissile.innerText = `Send missiles to Irun (${missileCount}/${MAX_MISSILES})`;
     
-    console.log("Missile sent! Elong is appeased.");
-
     if (missileCount >= MAX_MISSILES) {
         btnMissile.style.color = "#00ff00";
         btnMissile.style.borderColor = "#00ff00";
@@ -120,20 +156,17 @@ setInterval(() => {
     
     if (secondsSinceLastMissile > 20) {
         window.elongAngerMultiplier += 0.2; 
-        console.log(`Elong is getting impatient! Anger Multiplier: ${window.elongAngerMultiplier.toFixed(1)}x`);
     }
 }, 5000);
 
 // --- End of Night Win Condition ---
 function checkWinCondition() {
     if (deportCount >= MAX_DEPORT && missileCount >= MAX_MISSILES) {
-        console.log("All tasks complete. Ending night!");
         triggerWin();
     }
 }
 
 function triggerWin() {
-    // 1. Create a black overlay
     const fadeOutDiv = document.createElement('div');
     fadeOutDiv.style.position = 'fixed';
     fadeOutDiv.style.top = '0';
@@ -144,10 +177,9 @@ function triggerWin() {
     fadeOutDiv.style.opacity = '0';
     fadeOutDiv.style.zIndex = '9999'; 
     fadeOutDiv.style.transition = 'opacity 3s ease-in-out';
-    fadeOutDiv.style.pointerEvents = 'all'; // Blocks player from clicking anything else
+    fadeOutDiv.style.pointerEvents = 'all'; 
     document.body.appendChild(fadeOutDiv);
 
-    // 2. Create the "6:00 AM" text
     const winText = document.createElement('div');
     winText.innerText = "6:00 AM";
     winText.style.position = 'fixed';
@@ -160,16 +192,9 @@ function triggerWin() {
     winText.style.fontWeight = 'bold';
     winText.style.zIndex = '10000';
     winText.style.opacity = '0';
-    winText.style.transition = 'opacity 3s ease-in-out 1.5s'; // Fades in AFTER screen goes black
+    winText.style.transition = 'opacity 3s ease-in-out 1.5s'; 
     document.body.appendChild(winText);
 
-    // 3. Trigger Animations
     setTimeout(() => { fadeOutDiv.style.opacity = '1'; }, 100);
     setTimeout(() => { winText.style.opacity = '1'; }, 2000);
-    
-    // 4. (Optional) Redirect to main menu or next night after reading text
-    setTimeout(() => {
-        // window.location.href = 'menu.html';
-        console.log("Redirect to next scene here.");
-    }, 8000);
 }
