@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night 2 - Intro</title>
+    <style>
+        /* Basic Setup for a cinematic black screen */
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        #intro-text {
+            font-size: 2rem;
+            opacity: 0; /* Starts invisible */
+            transition: opacity 2s ease-in-out; /* Smooth fade effect */
+            max-width: 80%;
+            line-height: 1.5;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5); /* Slight creepy glow */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="intro-text"></div>
+
+    <script>
+        const textElement = document.getElementById('intro-text');
+        
+        // The dialogue sequences
+        const message1 = "Must was not the only one infected.";
+        const message2 = "Keep an eye on the guest room.<br>If the door is wide open, be prepared.";
+
+        // --- Sequence Timing ---
+
+        // 1. Fade in Message 1
+        setTimeout(() => {
+            textElement.innerHTML = message1;
+            textElement.style.opacity = '1';
+        }, 1000); 
+
+        // 2. Fade out Message 1
+        setTimeout(() => {
+            textElement.style.opacity = '0';
+        }, 5000); 
+
+        // 3. Fade in Message 2
+        setTimeout(() => {
+            textElement.innerHTML = message2;
+            textElement.style.opacity = '1';
+        }, 7000); 
+
+        // 4. Fade out Message 2
+        setTimeout(() => {
+            textElement.style.opacity = '0';
+        }, 12000); 
+
+        // 5. Redirect to Night 2
+        setTimeout(() => {
+            window.location.href = 'night2.html';
+        }, 15000); 
+    </script>
+
+</body>
+</html>
