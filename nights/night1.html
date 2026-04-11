@@ -63,28 +63,30 @@
             transition: transform 0.3s ease 0.5s; 
         }
 
-        /* --- NEW: Motion Sensor UI --- */
-        #motion-panel {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%) translateY(-85%); 
-            width: 250px;
-            height: 120px;
-            background: rgba(10, 10, 10, 0.95);
-            border: 2px solid #00ff00; 
-            border-top: none;
-            border-radius: 0 0 15px 15px;
-            padding: 10px;
-            z-index: 70;
-            transition: transform 0.3s;
+        /* --- NEW: System Buttons CSS --- */
+        .sys-btn {
+            background: #222;
+            color: #ccc;
+            border: 2px solid #555;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
             text-align: center;
         }
-        #motion-panel:hover {
-            transform: translateX(-50%) translateY(0);
+        .sys-btn:hover {
+            background: #444;
+            color: #fff;
+            border-color: #fff;
         }
-        .sensor-text { font-size: 0.8rem; color: #00ff00; margin-top: 5px; }
-        #sensor-status { font-weight: bold; font-size: 1.2rem; }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
 
         /* --- 3. Invisible Door Hitboxes --- */
         .door-zone {
@@ -252,7 +254,6 @@
         }
         .is-switching { animation: flashEffect 0.3s ease-out; }
 
-        /* --- NEW: 5-Second Static for AI Movement --- */
         @keyframes longFlashEffect {
             0% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
             80% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
@@ -288,25 +289,29 @@
 
     <div id="office-panorama"></div>
 
-    <div id="motion-panel">
-        <div class="sensor-text">DOOR MOTION SENSOR</div>
-        <div id="sensor-status" class="sensor-text">SCANNING...</div>
-        <div style="font-size: 0.6rem; color: #555;">(USES POWER)</div>
-    </div>
-
     <div id="left-panel" class="task-panel">
-        <div class="tab-label">DEP-3000</div>
-        <h2 style="color: #ff4444; margin-bottom: 10px;">Deportations</h2>
-        <div id="dep-content">
-            <p id="dep-status" style="color: #aaa;">[System Offline - Load JS]</p>
+        <div class="tab-label">DEP-9000</div>
+        <h2 style="color: #ff4444; margin-bottom: 15px; font-size: 1.3rem;">Deportor-9000</h2>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <button id="btn-deport" class="sys-btn">Deport liberals (0/10)</button>
+            <button id="btn-missile" class="sys-btn">Send missiles to Irun (0/5)</button>
         </div>
     </div>
 
     <div id="right-panel" class="task-panel">
-        <div class="tab-label">ML-900</div>
-        <h2 style="color: #ff4444; margin-bottom: 10px;">Missile Strike</h2>
-        <div id="ml-content">
-            <p id="ml-status" style="color: #aaa;">[System Offline - Load JS]</p>
+        <div class="tab-label">SYS-PWR</div>
+        <h2 style="color: #00ff00; margin-bottom: 10px; font-size: 1.3rem;">Power & Sensors</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-lights" class="sys-btn" style="border-color: #ffbb00; color: #ffbb00;">Turn Off Lights</button>
+            
+            <hr style="border: 1px solid #333; margin: 5px 0;">
+            
+            <div style="color: #00ff00; font-size: 0.9rem; text-align: center;">MOTION SENSOR</div>
+            <div class="btn-row">
+                <button id="btn-scan-left" class="sys-btn">Scan Left Door</button>
+                <button id="btn-scan-right" class="sys-btn">Scan Right Door</button>
+            </div>
+            <div id="sensor-status" style="color: #aaa; font-size: 0.8rem; text-align: center; margin-top: 5px;">Awaiting Scan...</div>
         </div>
     </div>
 
