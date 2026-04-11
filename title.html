@@ -15,7 +15,7 @@
             user-select: none; 
         }
 
-        /* --- NEW: Start Screen --- */
+        /* --- Start Screen --- */
         #start-screen {
             position: absolute;
             top: 0; left: 0;
@@ -24,7 +24,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 100; /* Ensure it sits on top of all UI and effects */
+            z-index: 100;
             cursor: pointer;
             transition: opacity 1s ease-in-out;
         }
@@ -41,7 +41,7 @@
             50% { opacity: 1; }
         }
 
-        /* 1. The Background Image with Jitter and Flicker */
+        /* Background Effects */
         #bg-container {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -53,19 +53,16 @@
             z-index: 1;
         }
 
-        /* 2. True Animated TV Static (Fuzz) */
         #static-noise {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            /* Uses a generated SVG noise texture */
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-            opacity: 0.15; /* Adjust this to make the snow lighter or darker */
+            opacity: 0.15; 
             pointer-events: none; 
             z-index: 10;
             animation: fuzzShift 0.2s infinite linear;
         }
 
-        /* 3. CRT Scanlines (Tight horizontal stripes) */
         #scanlines {
             position: absolute;
             top: 0; left: 0; width: 100vw; height: 100vh;
@@ -76,12 +73,11 @@
                 rgba(0,0,0,0.2) 50%,
                 rgba(0,0,0,0.2)
             );
-            background-size: 100% 4px; /* Size of the scanlines */
+            background-size: 100% 4px;
             pointer-events: none;
             z-index: 11;
         }
 
-        /* 4. Rolling Tracking Line */
         #tracking-line {
             position: absolute;
             top: -10%; left: 0; width: 100vw; height: 20px;
@@ -93,10 +89,7 @@
         }
 
         /* --- Animations --- */
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
-
+        @keyframes fadeIn { to { opacity: 1; } }
         @keyframes glitchFlicker {
             0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
             20%, 24%, 55% { opacity: 0.6; }
@@ -105,7 +98,6 @@
             81% { opacity: 0.3; }
             82% { opacity: 1; }
         }
-
         @keyframes jitter {
             0%, 96% { transform: translate(0, 0); }
             97% { transform: translate(-2px, 1px); }
@@ -113,14 +105,10 @@
             99% { transform: translate(-1px, 2px); }
             100% { transform: translate(0, 0); }
         }
-
-        /* Rapidly shifts the background position of the noise to animate it */
         @keyframes fuzzShift {
             0% { background-position: 0 0; }
             100% { background-position: 100% 100%; }
         }
-
-        /* Moves the thick tracking line down the screen */
         @keyframes rollDown {
             0% { top: -10%; }
             100% { top: 110%; }
@@ -146,6 +134,23 @@
             max-width: 600px;
         }
 
+        /* Button Wrappers for toggling menus */
+        #main-menu-buttons, #night-selection-menu {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        #night-selection-menu {
+            display: none; /* Hidden by default */
+        }
+
+        h2.menu-subtitle {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px #000;
+        }
+
         .menu-btn {
             display: block;
             background: transparent;
@@ -163,6 +168,13 @@
             color: #ccc;
             text-shadow: 0 0 15px #fff;
             padding-left: 10px; 
+        }
+
+        /* Disabled Button Style for Locked Nights */
+        .menu-btn.disabled {
+            color: #444;
+            text-shadow: none;
+            pointer-events: none;
         }
 
         #credits-display {
@@ -191,38 +203,104 @@
     <div id="ui-layer">
         <h1>Five Nights<br>at the Black House</h1>
         
-        <button class="menu-btn" onclick="startGame()">Play</button>
-        <button class="menu-btn" onclick="comingSoon()">Save Data</button>
-        <button class="menu-btn" onclick="comingSoon()">Import Data</button>
-        <button class="menu-btn" onclick="toggleCredits()">Credits</button>
+        <div id="main-menu-buttons">
+            <button class="menu-btn" onclick="toggleNightSelection(true)">Play</button>
+            <button class="menu-btn" onclick="exportSaveFile()">Save Data</button>
+            <button class="menu-btn" onclick="triggerImport()">Import Data</button>
+            <button class="menu-btn" onclick="toggleCredits()">Credits</button>
+        </div>
+
+        <div id="night-selection-menu">
+            <h2 class="menu-subtitle">Select Night</h2>
+            <button class="menu-btn" id="btn-night1" onclick="startNight(1)">Night 1</button>
+            <button class="menu-btn" id="btn-night2" onclick="startNight(2)">Night 2</button>
+            <button class="menu-btn" id="btn-night3" onclick="startNight(3)">Night 3</button>
+            <button class="menu-btn" id="btn-night4" onclick="startNight(4)">Night 4</button>
+            <button class="menu-btn" id="btn-night5" onclick="startNight(5)">Night 5</button>
+            <button class="menu-btn" onclick="toggleNightSelection(false)" style="margin-top: 20px; color: #ff5555;">[ Back ]</button>
+        </div>
 
         <div id="credits-display">
             Directed by Solan; made by Gemini and grok.
         </div>
     </div>
 
+    <input type="file" id="save-file-upload" accept=".save" style="display: none;" onchange="handleFileUpload(event)">
+
+    <script src="Save-load_logic/saveSystem.js"></script>
+
     <script>
-        // --- NEW: Start Screen & Audio Logic ---
+        // --- Start Screen Audio Logic ---
         document.getElementById('start-screen').addEventListener('click', function() {
-            // Play Audio
             const bgMusic = document.getElementById('bg-music');
             bgMusic.play().catch(e => console.log("Audio play failed:", e));
 
-            // Fade out and remove the start screen overlay
             this.style.opacity = '0';
             setTimeout(() => this.remove(), 1000);
-        }, { once: true }); // Triggers only on the very first click
+        }, { once: true });
 
-        // --- Original Menu Logic ---
-        function startGame() {
-            // Routing updated to point to the 'nights' folder
-            window.location.href = 'nights/night1intro.html'; 
+        // --- Menu Navigation Logic ---
+        function toggleNightSelection(show) {
+            const mainMenu = document.getElementById('main-menu-buttons');
+            const nightMenu = document.getElementById('night-selection-menu');
+            
+            if (show) {
+                mainMenu.style.display = 'none';
+                nightMenu.style.display = 'flex';
+                updateMenuUI(); // Refresh locks every time it's opened
+            } else {
+                mainMenu.style.display = 'flex';
+                nightMenu.style.display = 'none';
+            }
         }
 
-        function comingSoon() {
-            alert("Data management logic will be implemented here later.");
+        // --- Night Redirection ---
+        function startNight(night) {
+            if (night === 1) {
+                window.location.href = 'nights/night1intro.html'; 
+            } else {
+                window.location.href = `nights/night${night}.html`;
+            }
         }
 
+        // --- Import Data Wrapper ---
+        function triggerImport() {
+            document.getElementById('save-file-upload').click();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (typeof window.importSaveFile === 'function') {
+                    window.importSaveFile(file); // From saveSystem.js
+                } else {
+                    alert("Error: Save system not loaded properly.");
+                }
+            }
+            // Reset input so the same file can be uploaded again if needed
+            event.target.value = ''; 
+        }
+
+        // --- Overriding updateMenuUI from saveSystem.js to handle our buttons ---
+        window.updateMenuUI = function() {
+            // Wait for gameProgress to be accessible from saveSystem.js
+            if (typeof gameProgress === 'undefined') return;
+
+            // Night 1 is always unlocked.
+            
+            // Check unlocks
+            const btn2 = document.getElementById('btn-night2');
+            const btn3 = document.getElementById('btn-night3');
+            const btn4 = document.getElementById('btn-night4');
+            const btn5 = document.getElementById('btn-night5');
+
+            if (gameProgress.Night1done === 1) { btn2.classList.remove('disabled'); } else { btn2.classList.add('disabled'); }
+            if (gameProgress.Night2done === 1) { btn3.classList.remove('disabled'); } else { btn3.classList.add('disabled'); }
+            if (gameProgress.Night3done === 1) { btn4.classList.remove('disabled'); } else { btn4.classList.add('disabled'); }
+            if (gameProgress.Night4done === 1) { btn5.classList.remove('disabled'); } else { btn5.classList.add('disabled'); }
+        };
+
+        // --- Credits Toggle ---
         function toggleCredits() {
             const credits = document.getElementById('credits-display');
             if (credits.style.opacity === '1') {
