@@ -2,7 +2,6 @@
 
 const cameraNav = document.getElementById('camera-nav');
 const cameraFeed = document.getElementById('camera-feed');
-const staticFlash = document.getElementById('static-flash');
 const charrlieSprite = document.getElementById('charrlie-sprite');
 const elongSprite = document.getElementById('elong-sprite');
 
@@ -60,22 +59,27 @@ function playCameraSound() {
     currentCamAudio.play().catch(e => console.log("Audio block", e));
 }
 
-// Short flicker for manually switching cameras
+// Global short flicker (for clicking buttons)
 window.triggerFlicker = function() {
-    staticFlash.classList.remove('is-switching', 'is-long-switching');
-    void staticFlash.offsetWidth; // Force CSS animation reflow
-    staticFlash.classList.add('is-switching');
+    const flash = document.getElementById('static-flash');
+    if (!flash) return;
+    flash.classList.remove('is-switching', 'is-long-switching');
+    void flash.offsetWidth; // Force CSS animation reflow
+    flash.classList.add('is-switching');
 };
 
-// NEW: Long 5-second flicker for AI Movement
+// Global long flicker (for AI Movement)
 window.triggerLongFlicker = function() {
-    staticFlash.classList.remove('is-switching', 'is-long-switching');
-    void staticFlash.offsetWidth; 
-    staticFlash.classList.add('is-long-switching');
+    const flash = document.getElementById('static-flash');
+    if (!flash) return;
+    
+    flash.classList.remove('is-switching', 'is-long-switching');
+    void flash.offsetWidth; 
+    flash.classList.add('is-long-switching');
 
-    // Clean up the class after 5 seconds so it can be triggered again later
+    // Clean up class after 5s so it can be reused
     setTimeout(() => {
-        staticFlash.classList.remove('is-long-switching');
+        flash.classList.remove('is-long-switching');
     }, 5000);
 };
 
@@ -101,6 +105,7 @@ function switchCamera(roomName, playAudio = true) {
     }
 }
 
+// Global UI refresher so AI can change what you see mid-static
 window.refreshCameraUI = function() {
     if (window.isCameraOpen) {
         switchCamera(currentCamera, false); 
