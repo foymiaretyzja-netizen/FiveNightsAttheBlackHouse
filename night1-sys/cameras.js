@@ -6,7 +6,6 @@ const staticFlash = document.getElementById('static-flash');
 const charrlieSprite = document.getElementById('charrlie-sprite');
 const elongSprite = document.getElementById('elong-sprite');
 
-// Using renamed variables to avoid collisions with night1.html
 const camUIMonitor = document.getElementById('camera-monitor');
 const camUILeftPanel = document.getElementById('left-panel');
 const camUIRightPanel = document.getElementById('right-panel');
@@ -27,11 +26,9 @@ const rooms = {
     'Storage': '../Scenes/Storage.jpg'
 };
 
-// Start setting current camera
 let currentCamera = 'Guest Room';
 
 function setupCameraButtons() {
-    // Clear existing buttons to prevent duplicates
     cameraNav.innerHTML = '<img id="camera-map-img" src="../night1-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">';
     
     for (const roomName in rooms) {
@@ -63,32 +60,40 @@ function playCameraSound() {
     currentCamAudio.play().catch(e => console.log("Audio block", e));
 }
 
-function triggerFlicker() {
-    staticFlash.classList.remove('is-switching');
+// Short flicker for manually switching cameras
+window.triggerFlicker = function() {
+    staticFlash.classList.remove('is-switching', 'is-long-switching');
     void staticFlash.offsetWidth; // Force CSS animation reflow
     staticFlash.classList.add('is-switching');
-}
+};
 
-/**
- * UPDATED: Now checks window.aiPositions which are updated by ElongAI.js
- */
+// NEW: Long 5-second flicker for AI Movement
+window.triggerLongFlicker = function() {
+    staticFlash.classList.remove('is-switching', 'is-long-switching');
+    void staticFlash.offsetWidth; 
+    staticFlash.classList.add('is-long-switching');
+
+    // Clean up the class after 5 seconds so it can be triggered again later
+    setTimeout(() => {
+        staticFlash.classList.remove('is-long-switching');
+    }, 5000);
+};
+
 function switchCamera(roomName, playAudio = true) {
     if (playAudio) {
         playCameraSound();
-        triggerFlicker();
+        window.triggerFlicker(); 
     }
     
     currentCamera = roomName;
     cameraFeed.style.backgroundImage = `url('${rooms[roomName]}')`;
 
-    // Toggle Elong Sprite based on his actual position in the AI script
     if (window.aiPositions && window.aiPositions.elong === roomName) {
         elongSprite.style.display = 'block';
     } else {
         elongSprite.style.display = 'none';
     }
 
-    // Toggle Charrlie Sprite (Positions set in CharrlieAI.js later)
     if (window.aiPositions && window.aiPositions.charrlie === roomName) {
         charrlieSprite.style.display = 'block';
     } else {
@@ -96,7 +101,12 @@ function switchCamera(roomName, playAudio = true) {
     }
 }
 
-// --- TOGGLE LOGIC ---
+window.refreshCameraUI = function() {
+    if (window.isCameraOpen) {
+        switchCamera(currentCamera, false); 
+    }
+};
+
 window.toggleCamera = function() {
     window.isCameraOpen = !window.isCameraOpen;
     
@@ -106,8 +116,7 @@ window.toggleCamera = function() {
         camUIRightPanel.classList.remove('is-visible');
         
         playCameraSound();
-        triggerFlicker();
-        // Refresh sprite positions when opening monitor
+        window.triggerFlicker();
         switchCamera(currentCamera, false); 
     } else {
         camUIMonitor.style.transform = 'translateY(100%)'; 
