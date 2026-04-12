@@ -31,12 +31,13 @@ window.aiPositions.zuckenburger = 'Janitor Room';
 
 // Starts the AI after the initial delay
 function initZuckenBurger() {
-    console.log("[ZuckenBurger AI] Initialized. Waiting 35 seconds...");
+    console.log("[ZuckenBurger AI] Initialized. FORCE STARTING IN 3 SECONDS.");
+    
     setTimeout(() => {
         zuckActive = true;
-        console.log("[ZuckenBurger AI] ZuckenBurger is now active.");
-        scheduleZuckAttack();
-    }, 35000); // Change to 3000 for quick testing!
+        console.log("[ZuckenBurger AI] ZuckenBurger is active. Forcing Office Attack!");
+        enterOffice(); // <-- Skips the waiting and forces him right into the office!
+    }, 3000); 
 }
 
 // Randomizes the next attack between 15s and 26s
