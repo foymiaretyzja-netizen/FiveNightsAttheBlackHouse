@@ -1,6 +1,5 @@
 // --- night2-sys/ElongAIN2.js ---
 
-// REMOVED ../ to fix pathing!
 const elongAudioCues = [
     new Audio('Sounds/soundreality-knocking-on-a-metal-door-226310.mp3'),
     new Audio('Sounds/aglaxle-glass-shattering-461637.mp3'),
@@ -26,14 +25,16 @@ let elongAtDoor = false;
 let elongGraceTimer = null;
 let elongSoundLoop = null;
 
-// Hardware lock for the initial timer
 let elongActive = false; 
 
+// FIX: Ensure the global object exists before trying to add Elong to it!
+window.aiPositions = window.aiPositions || {};
 window.aiPositions.elong = elongCurrentRoom;
 
 function moveElong() {
-    // If he's not active yet, or he's at the door, or door is closed, do nothing.
     if (!elongActive || elongAtDoor || window.rightDoorClosed) return; 
+
+    console.log(`[Elong AI] Assessing move... Current location: ${elongCurrentRoom}`);
 
     const roll = Math.floor(Math.random() * 3) + 1;
     let nextRoom = elongCurrentRoom;
@@ -42,4 +43,113 @@ function moveElong() {
     if (roll === 1) {
         nextRoom = connections[Math.floor(Math.random() * connections.length)];
     } else {
-        if (elongCurrentRoom === 'Storage
+        if (elongCurrentRoom === 'Storage') nextRoom = 'Conference Room';
+        else if (elongCurrentRoom === 'Conference Room') nextRoom = 'Presidential Right Door';
+        else if (elongCurrentRoom === 'Kitchen') nextRoom = 'Conference Room';
+        else nextRoom = connections[0];
+    }
+
+    if (nextRoom !== elongCurrentRoom) {
+        console.log(`[Elong AI] Moving from ${elongCurrentRoom} to ${nextRoom}`);
+        
+        elongStaticSound.currentTime = 0;
+        elongStaticSound.play().catch(() => {});
+
+        if (window.isCameraOpen && typeof window.triggerLongFlicker === "function") {
+            window.triggerLongFlicker(); 
+        }
+
+        setTimeout(() => {
+            elongCurrentRoom = nextRoom;
+            window.aiPositions.elong = elongCurrentRoom;
+            
+            if (typeof window.refreshCameraUI === "function") {
+                window.refreshCameraUI();
+            }
+
+            if (elongCurrentRoom === 'Presidential Right Door') {
+                console.log(`[Elong AI] Arrived at Right Door!`);
+                triggerElongAtDoor();
+            }
+        }, 200); 
+    } else {
+        console.log(`[Elong AI] Decided to stay in ${elongCurrentRoom}`);
+    }
+}
+
+function triggerElongAtDoor() {
+    elongAtDoor = true;
+    playElongHorrorSound();
+
+    elongGraceTimer = setTimeout(() => {
+        if (!window.rightDoorClosed) {
+            console.log(`[Elong AI] Door open. Triggering jumpscare!`);
+            triggerElongJumpscare();
+        } else {
+            console.log(`[Elong AI] Door closed. Lingering...`);
+            handleElongLinger();
+        }
+    }, 10000);
+
+    elongSoundLoop = setInterval(() => {
+        if (Math.random() < 0.33) playElongHorrorSound();
+    }, 10000);
+}
+
+function handleElongLinger() {
+    const lingerTime = Math.random() * 5000 + 5000;
+    setTimeout(() => {
+        if (window.rightDoorClosed) {
+            console.log(`[Elong AI] Gave up. Returning to Storage.`);
+            resetElong();
+        } else {
+            console.log(`[Elong AI] Player opened the door while lingering! Jumpscare!`);
+            triggerElongJumpscare(); 
+        }
+    }, lingerTime);
+}
+
+function resetElong() {
+    elongAtDoor = false;
+    clearTimeout(elongGraceTimer);
+    clearInterval(elongSoundLoop);
+    elongCurrentRoom = 'Storage';
+    window.aiPositions.elong = elongCurrentRoom;
+    if (typeof window.refreshCameraUI === "function") window.refreshCameraUI();
+}
+
+function playElongHorrorSound() {
+    const sound = elongAudioCues[Math.floor(Math.random() * elongAudioCues.length)];
+    sound.currentTime = 0;
+    sound.play().catch(() => {});
+}
+
+function triggerElongJumpscare() {
+    const mon = document.getElementById('camera-monitor');
+    if (mon) mon.style.display = 'none';
+
+    elongOfficeSprite.style.display = 'block';
+    elongOfficeSprite.style.left = '50%';
+    elongOfficeSprite.style.transform = 'translateX(-50%) scale(1.5)';
+    
+    elongJumpscareSound.play();
+
+    setTimeout(() => {
+        elongOfficeSprite.style.transform = 'translateX(-50%) scale(8)';
+        elongOfficeSprite.style.filter = 'brightness(2)';
+    }, 50);
+
+    setTimeout(() => {
+        alert("ELONG TERMINATED YOUR CONTRACT.");
+        location.reload();
+    }, 1500);
+}
+
+// --- NIGHT 2 INITIAL GRACE PERIOD ---
+setTimeout(() => {
+    elongActive = true;
+    console.log("[Elong AI] 45 SECONDS PASSED: Elong is now active.");
+    
+    moveElong();
+    setInterval(moveElong, 15000);
+}, 45000);
