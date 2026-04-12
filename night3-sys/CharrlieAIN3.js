@@ -27,7 +27,7 @@ function initCharrlie() {
 function scheduleNextCharrlieMove() {
     if (window.isBlackout) return; // Stop if power is out
 
-    const nextMoveTime = Math.floor(Math.random() * 8000) + 7000; // 7s - 15s
+    const nextMoveTime = Math.floor(Math.random() * 15000) + 20000; // 7s - 15s
     
     charrlieTimer = setTimeout(() => {
         advanceCharrlieStage();
