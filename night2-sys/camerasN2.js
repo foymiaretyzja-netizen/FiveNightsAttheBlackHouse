@@ -9,30 +9,30 @@ const camUILeftPanel = document.getElementById('left-panel');
 const camUIRightPanel = document.getElementById('right-panel');
 
 const camSounds = [
-    new Audio('../Sounds/freesound_community-aiwa-cx-930-vhs-vcr-video-cassette-recorderwav-14430.mp3'),
-    new Audio('../Sounds/designerschoice-comav_vcr-rewinding-vhs-tape_nicholas-judy_tdc-493294.mp3')
+    new Audio('Sounds/freesound_community-aiwa-cx-930-vhs-vcr-video-cassette-recorderwav-14430.mp3'),
+    new Audio('Sounds/designerschoice-comav_vcr-rewinding-vhs-tape_nicholas-judy_tdc-493294.mp3')
 ];
 
 let currentCamAudio = null;
 
 // NEW FOR NIGHT 2: Global variable for Charrlie's phase in the Guest Room
 // CharrlieAIN2.js will update this variable as he opens the door.
-window.currentGuestRoomImg = '../ScenesN2/guestroom-1.jpg';
+window.currentGuestRoomImg = 'ScenesN2/guestroom-1.jpg';
 
 const rooms = {
-    'Conference Room': '../Scenes/Conference room.jpg',
-    'Diner': '../Scenes/Diner.jpg',
+    'Conference Room': 'Scenes/Conference room.jpg',
+    'Diner': 'Scenes/Diner.jpg',
     'Guest Room': 'DYNAMIC', // Flagged so the script knows to use the window variable
-    'Janitor Room': '../Scenes/Janitor-room.jpg',
-    'Kitchen': '../Scenes/Kitchen.jpg',
-    'Storage': '../Scenes/Storage.jpg'
+    'Janitor Room': 'Scenes/Janitor-room.jpg',
+    'Kitchen': 'Scenes/Kitchen.jpg',
+    'Storage': 'Scenes/Storage.jpg'
 };
 
 let currentCamera = 'Guest Room';
 
 function setupCameraButtons() {
     // Updated path to night2-sys
-    cameraNav.innerHTML = '<img id="camera-map-img" src="../night2-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">';
+    cameraNav.innerHTML = '<img id="camera-map-img" src="night2-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">';
     
     for (const roomName in rooms) {
         const btn = document.createElement('button');
