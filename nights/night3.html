@@ -291,9 +291,11 @@
         }
         #charrlie-sprite { left: 20%; }
         #elong-sprite { right: 20%; }
+        /* ADDED ZUCK CAMERA CSS */
+        #zuck-sprite { left: 50%; transform: translateX(-50%); }
 
         /* Office/Jumpscare Sprites */
-        #elong-sprite-office, #charrlie-sprite-office {
+        #elong-sprite-office, #charrlie-sprite-office, #zuck-sprite-office {
             height: 70%;
             bottom: 10%;
             z-index: 100;
@@ -354,6 +356,9 @@
                 <div id="camera-feed"></div>
                 <img id="charrlie-sprite" class="ai-sprite" src="../night3-sys/sprites/Charrlie.png" alt="Charrlie">
                 <img id="elong-sprite" class="ai-sprite" src="../night3-sys/sprites/Elong.png" alt="Elong">
+                
+                <img id="zuck-sprite" class="ai-sprite" src="../night3-sys/sprites/ZuckenBurger.png" alt="ZuckenBurger">
+                
                 <div id="crt-overlay"></div>
                 <div id="static-flash"></div>
             </div>
@@ -362,6 +367,7 @@
 
     <img id="charrlie-sprite-office" class="ai-sprite" src="../night3-sys/sprites/Charrlie.png">
     <img id="elong-sprite-office" class="ai-sprite" src="../night3-sys/sprites/Elong.png">
+    <img id="zuck-sprite-office" class="ai-sprite" src="../night3-sys/sprites/ZuckenBurger.png">
 
     <script>
         const panorama = document.getElementById('office-panorama');
