@@ -9,37 +9,45 @@ const btnSensorLeft = document.getElementById('btn-sensor-left');
 const btnSensorRight = document.getElementById('btn-sensor-right');
 const sensorDisplay = document.getElementById('sensor-display'); 
 
-// --- NEW: Audio Setup ---
+// --- Audio Setup ---
 const lightSwitchSound = new Audio('../Sounds/soundreality-switch-150130.mp3');
 const lightHumSound = new Audio('../Sounds/freesound_community-fluoresent_light_hum_and_refrigerator-48831.mp3');
-lightHumSound.loop = true; // Make the hum loop endlessly
+lightHumSound.loop = true; 
+lightHumSound.volume = 0.5; 
 
 const warningBeepSound = new Audio('../Sounds/freesound_community-beep-beep-43875.mp3');
 const clearBeepSound = new Audio('../Sounds/musheran-beep-313342.mp3');
 
+// --- NEW: Power Outage Sound ---
+const powerDownSound = new Audio('../Sounds/freesound_community-machine-powering-down-84722.mp3');
+
 let power = 100.0;
 let isBlackout = false;
 let lightsOn = true;
+let hasInteracted = false; 
 
-// 100% / 300 seconds (5 mins) = ~0.33 drain per second
 const BASE_DRAIN = 0.33; 
-
-// Flat power penalty for pinging the motion scanner
 const SENSOR_POWER_COST = 1.5; 
 
-// Attempt to start the hum immediately (browsers may block this until the player clicks something)
-lightHumSound.play().catch(e => console.log("Ambient hum waiting for player interaction."));
+// Global click listener to bypass Autoplay restrictions
+document.addEventListener('click', () => {
+    if (!hasInteracted) {
+        hasInteracted = true;
+        if (lightsOn && !isBlackout) {
+            lightHumSound.play().catch(e => console.warn("[Audio] Hum blocked:", e));
+        }
+    }
+});
 
 // Toggle Lights Button Logic
 if (btnLights) {
     btnLights.addEventListener('click', () => {
-        if (isBlackout) return; // Can't toggle lights if the power is already dead
+        if (isBlackout) return;
 
         lightsOn = !lightsOn;
         
-        // Play the physical click sound
         lightSwitchSound.currentTime = 0;
-        lightSwitchSound.play().catch(() => {});
+        lightSwitchSound.play().catch(e => console.warn("[Audio] Switch sound error:", e));
 
         if (lightsOn) {
             panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room.jpg')";
@@ -47,15 +55,13 @@ if (btnLights) {
             btnLights.style.borderColor = "#ffbb00";
             btnLights.style.color = "#ffbb00";
             
-            // Resume the hum
-            lightHumSound.play().catch(() => {});
+            lightHumSound.play().catch(e => console.warn("[Audio] Hum resume error:", e));
         } else {
             panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room-blackout.jpg')";
             btnLights.innerText = "Turn On Lights";
             btnLights.style.borderColor = "#555";
             btnLights.style.color = "#aaa";
             
-            // Pause the hum
             lightHumSound.pause();
         }
     });
@@ -65,7 +71,6 @@ if (btnLights) {
 function scanDoor(side) {
     if (isBlackout) return;
 
-    // Instantly deduct power for using the scanner
     power -= SENSOR_POWER_COST;
     updatePowerUI();
 
@@ -76,7 +81,6 @@ function scanDoor(side) {
 
     let isEntityPresent = false;
 
-    // Check global AI positions from your AI scripts
     if (window.aiPositions) {
         if (side === 'left' && window.aiPositions.charrlie === 'Presidential Left Door') {
             isEntityPresent = true;
@@ -85,24 +89,21 @@ function scanDoor(side) {
         }
     }
 
-    // Update feedback for the player
     const feedbackMsg = isEntityPresent ? `WARNING: MOTION AT ${side.toUpperCase()} DOOR` : `CLEAR: NO MOTION`;
     console.log(`[Motion Sensor] ${feedbackMsg}`);
     
-    // --- NEW: Play corresponding scanner beep ---
     if (isEntityPresent) {
         warningBeepSound.currentTime = 0;
-        warningBeepSound.play().catch((e) => console.warn("Audio blocked:", e));
+        warningBeepSound.play().catch((e) => console.warn("[Audio] Warning beep error:", e));
     } else {
         clearBeepSound.currentTime = 0;
-        clearBeepSound.play().catch((e) => console.warn("Audio blocked:", e));
+        clearBeepSound.play().catch((e) => console.warn("[Audio] Clear beep error:", e));
     }
     
     if (sensorDisplay) {
         sensorDisplay.innerText = feedbackMsg;
         sensorDisplay.style.color = isEntityPresent ? "#ff0000" : "#00ff00";
         
-        // Reset the display after 2 seconds
         setTimeout(() => { 
             if (!isBlackout) {
                 sensorDisplay.innerText = "Scanner Ready"; 
@@ -116,7 +117,6 @@ function scanDoor(side) {
 if (btnSensorLeft) btnSensorLeft.addEventListener('click', () => scanDoor('left'));
 if (btnSensorRight) btnSensorRight.addEventListener('click', () => scanDoor('right'));
 
-// Helper function to keep UI updates clean
 function updatePowerUI() {
     if (powerDisplay) {
         powerDisplay.innerText = `Power: ${Math.max(0, Math.floor(power))}%`;
@@ -129,19 +129,16 @@ setInterval(() => {
 
     let currentDrain = BASE_DRAIN;
 
-    // Turning off the lights stops draining so much power (-50% base drain)
     if (!lightsOn) {
         currentDrain *= 0.5; 
     }
 
-    // Heavy Power Drainers
     if (window.leftDoorClosed) currentDrain += 0.15;
     if (window.rightDoorClosed) currentDrain += 0.15;
     if (window.isCameraOpen) currentDrain += 0.10;
 
     power -= currentDrain;
 
-    // Check for game over
     if (power <= 0) {
         power = 0;
         triggerBlackout();
@@ -149,21 +146,22 @@ setInterval(() => {
         updatePowerUI();
     }
 
-}, 1000); // Runs exactly once per second
+}, 1000);
 
 // Blackout State
 function triggerBlackout() {
-    if (isBlackout) return; // Prevent multiple triggers
+    if (isBlackout) return; 
     isBlackout = true;
     lightsOn = false;
     
-    // --- NEW: Kill the ambient lights hum ---
     lightHumSound.pause();
     
-    // Switch to dark room
+    // --- NEW: Play the dramatic power outage sound! ---
+    powerDownSound.currentTime = 0;
+    powerDownSound.play().catch(e => console.warn("[Audio] Power down sound error:", e));
+    
     if (panoramaBg) panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room-blackout.jpg')";
     
-    // Force everything off to mimic a total system failure
     if (powerDisplay) {
         powerDisplay.innerText = "Power: 0%";
         powerDisplay.style.color = "#ff0000";
@@ -174,7 +172,6 @@ function triggerBlackout() {
         sensorDisplay.style.color = "#ff0000";
     }
 
-    // Open doors if they were closed
     window.leftDoorClosed = false;
     window.rightDoorClosed = false;
     
@@ -183,7 +180,6 @@ function triggerBlackout() {
     if (leftShadow) leftShadow.style.opacity = 0;
     if (rightShadow) rightShadow.style.opacity = 0;
 
-    // Kick the player out of the cameras if they are using them
     if (window.isCameraOpen && typeof window.toggleCamera === 'function') {
         window.toggleCamera();
     }
