@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night 3</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: "Courier New", Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .text-container {
+            position: absolute;
+            opacity: 0;
+            text-align: center;
+        }
+
+        /* The slow fade for the warning */
+        #warning-text {
+            font-size: 1.5rem;
+            max-width: 800px;
+            line-height: 1.5;
+            transition: opacity 3s ease-in-out;
+        }
+
+        /* The aggressive pop for the Night 3 title */
+        #night-text {
+            font-size: 5rem;
+            font-weight: bold;
+            letter-spacing: 10px;
+            transition: opacity 0.2s ease-in; /* Faster fade in for impact */
+        }
+
+        /* CSS class to trigger visibility */
+        .is-visible {
+            opacity: 1 !important;
+        }
+        
+        /* Slow fade out for the Night text */
+        .fade-out-slow {
+            opacity: 0 !important;
+            transition: opacity 3s ease-out !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="warning-text" class="text-container">
+        "You cannot hide from him, if you see him, just know he can't see in the dark."
+    </div>
+
+    <div id="night-text" class="text-container">
+        NIGHT 3
+    </div>
+
+    <script>
+        // --- Audio Setup ---
+        // Make sure your audio paths match your repo structure!
+        const bgMusic = new Audio('Sounds/dragon-studio-horror-background-music-443137.mp3');
+        const boomSound = new Audio('Sounds/11325622-big-cine-boom-sound-effect-245851.mp3');
+
+        // Text Elements
+        const warningText = document.getElementById('warning-text');
+        const nightText = document.getElementById('night-text');
+
+        // Sequence Timing
+        window.onload = () => {
+            // 1. Start the eerie background music immediately
+            bgMusic.volume = 0.6; // Slightly lowered so it's atmospheric, not deafening
+            bgMusic.play().catch(e => console.log("Audio autoplay blocked by browser", e));
+
+            // 2. Fade in the warning text after 2 seconds
+            setTimeout(() => {
+                warningText.classList.add('is-visible');
+            }, 2000);
+
+            // 3. Fade out the warning text after reading time (7 seconds later)
+            setTimeout(() => {
+                warningText.classList.remove('is-visible');
+            }, 9000);
+
+            // 4. BAM. Drop the "NIGHT 3" text and the boom sound (3 seconds after warning fades)
+            setTimeout(() => {
+                nightText.classList.add('is-visible');
+                boomSound.play().catch(e => console.log("Boom sound blocked", e));
+            }, 12000);
+
+            // 5. Fade out "NIGHT 3" and the background music slowly
+            setTimeout(() => {
+                nightText.classList.add('fade-out-slow');
+                
+                // Audio fade out trick
+                let fadeAudio = setInterval(() => {
+                    if (bgMusic.volume > 0.1) {
+                        bgMusic.volume -= 0.1;
+                    } else {
+                        bgMusic.pause();
+                        clearInterval(fadeAudio);
+                    }
+                }, 200);
+            }, 16000);
+
+            // 6. Transition to the actual Night 3 gameplay file!
+            setTimeout(() => {
+                // Change this if your night 3 file has a different name
+                window.location.href = 'night3.html'; 
+            }, 20000);
+        };
+    </script>
+</body>
+</html>
