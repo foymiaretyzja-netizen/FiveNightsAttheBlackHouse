@@ -24,10 +24,10 @@ function stopTaskAudio() {
 
 // --- Task Variables ---
 let lightsCount = 0;
-const MAX_LIGHTS = 5;
+const MAX_LIGHTS = 10; // Increased to 10 for scaling difficulty
 
 let breakerCount = 0;
-const MAX_BREAKER = 1;
+const MAX_BREAKER = 10; // Increased to 10
 
 window.isTaskActive = false; 
 
@@ -50,17 +50,22 @@ styles.innerHTML = `
     }
     .minigame-box {
         background: #222; border: 4px solid #555; padding: 20px; border-radius: 10px;
-        text-align: center; box-shadow: 0 0 20px rgba(0,0,0,1);
+        text-align: center; box-shadow: 0 0 20px rgba(0,0,0,1); max-width: 90vw;
     }
     /* Lights Task CSS */
-    .track-container { display: flex; gap: 20px; margin-top: 20px; }
+    .track-container { display: flex; gap: 15px; margin-top: 20px; justify-content: center; flex-wrap: wrap; }
     .track { width: 40px; height: 200px; background: #111; border: 2px solid #444; position: relative; }
     .slider { width: 100%; height: 40px; background: #00ff00; position: absolute; left: 0; box-shadow: 0 0 10px #00ff00; }
     .slider.paused { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
     .track-btn { margin-top: 10px; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; background: #444; color: #fff; border: 2px solid #666; }
     /* Breaker Task CSS */
-    .color-box { width: 150px; height: 150px; margin: 20px auto; border: 4px solid #fff; }
-    .breaker-btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; font-weight: bold; background: #ff4444; color: white; border: 2px solid #ffaaaa; }
+    .breaker-container { display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
+    .color-pair { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .color-box { width: 80px; height: 80px; border: 4px solid #fff; border-radius: 10px; }
+    .flicker-box { cursor: pointer; transition: transform 0.1s; }
+    .flicker-box:active { transform: scale(0.9); }
+    .flicker-box.locked { border-color: #ffaa00; box-shadow: 0 0 15px #ffaa00; }
+    .breaker-btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; font-weight: bold; background: #ff4444; color: white; border: 2px solid #ffaaaa; margin-top: 20px; }
     .cancel-hint { margin-top: 20px; color: #aaa; font-size: 0.9rem; }
 `;
 document.head.appendChild(styles);
@@ -132,11 +137,21 @@ if (btnRepairLights) {
 function startLightsMinigame() {
     minigameOverlay.style.display = 'flex';
     
-    const sliders = [
-        { y: 0, speed: 2.5, dir: 1, paused: false },
-        { y: 80, speed: 3.5, dir: -1, paused: false },
-        { y: 150, speed: 4.5, dir: 1, paused: false }
-    ];
+    // Calculate difficulty: Base 3 tracks, +1 for every 3 completions
+    const numTracks = 3 + Math.floor(lightsCount / 3);
+    const baseSpeeds = [1.5, 2.0, 2.5]; // Slower start
+    
+    const sliders = [];
+    for (let i = 0; i < numTracks; i++) {
+        // Fast speeds for extra tracks
+        let spd = i < 3 ? baseSpeeds[i] : (3.5 + (i - 3)); 
+        sliders.push({ 
+            y: Math.random() * 150, 
+            speed: spd, 
+            dir: Math.random() > 0.5 ? 1 : -1, 
+            paused: false 
+        });
+    }
 
     minigameOverlay.innerHTML = `
         <div class="minigame-box">
@@ -149,8 +164,8 @@ function startLightsMinigame() {
     const container = document.getElementById('track-container');
     const sliderEls = [];
 
-    // Build the 3 tracks
-    for (let i = 0; i < 3; i++) {
+    // Build the tracks dynamically
+    for (let i = 0; i < numTracks; i++) {
         const trackWrap = document.createElement('div');
         
         const track = document.createElement('div');
@@ -179,7 +194,7 @@ function startLightsMinigame() {
 
     // Animation Loop
     function animateLights() {
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < numTracks; i++) {
             if (!sliders[i].paused) {
                 sliders[i].y += sliders[i].speed * sliders[i].dir;
                 if (sliders[i].y <= 0 || sliders[i].y >= 160) { // 200 track - 40 slider
@@ -196,14 +211,13 @@ function startLightsMinigame() {
 
 function checkLightsWin(sliders) {
     if (sliders.every(s => s.paused)) {
-        // Find the difference between the highest and lowest slider
         const ys = sliders.map(s => s.y);
         const diff = Math.max(...ys) - Math.min(...ys);
 
         if (diff < 25) { // 25px tolerance for overlap
             successSound.play();
             lightsCount++;
-            window.cancelCurrentTask(); // Closes UI cleanly
+            window.cancelCurrentTask(); 
             
             if (lightsCount >= MAX_LIGHTS) {
                 btnRepairLights.style.color = "#00ff00";
@@ -243,38 +257,93 @@ if (btnFixBreaker) {
 function startBreakerMinigame() {
     minigameOverlay.style.display = 'flex';
     
+    // Scale difficulty: +1 pair every 2 completed breakers
+    const numPairs = 1 + Math.floor(breakerCount / 2);
     const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
-    const targetColor = colors[Math.floor(Math.random() * colors.length)];
-    let currentColor = '';
+    
+    let targetColors = [];
+    let currentColors = [];
+    let isLocked = [];
+
+    // Generate UI
+    let pairsHTML = '';
+    for (let i = 0; i < numPairs; i++) {
+        const target = colors[Math.floor(Math.random() * colors.length)];
+        targetColors.push(target);
+        currentColors.push('');
+        isLocked.push(false);
+
+        pairsHTML += `
+            <div class="color-pair">
+                <div class="color-box" style="background: ${target}; border-radius: 50%;"></div>
+                <div class="color-box flicker-box" id="flicker-box-${i}"></div>
+            </div>
+        `;
+    }
 
     minigameOverlay.innerHTML = `
         <div class="minigame-box">
             <h2>RE-ROUTE BREAKER</h2>
-            <p>TARGET COLOR:</p>
-            <div class="color-box" style="background: ${targetColor}; width: 80px; height: 80px; border-radius: 50%;"></div>
-            <p>CURRENT FREQUENCY:</p>
-            <div class="color-box" id="flicker-box"></div>
-            <button class="breaker-btn" id="btn-lock-breaker">LOCK CONNECTION</button>
+            <p style="margin-bottom: 10px;">Click the flickering boxes to lock their color!</p>
+            <div class="breaker-container">
+                ${pairsHTML}
+            </div>
+            <button class="breaker-btn" id="btn-lock-breaker">VERIFY CONNECTION</button>
             <div class="cancel-hint">Click outside the box to cancel</div>
         </div>
     `;
 
-    const flickerBox = document.getElementById('flicker-box');
+    const flickerElements = [];
+    for (let i = 0; i < numPairs; i++) {
+        const el = document.getElementById(`flicker-box-${i}`);
+        flickerElements.push(el);
+        
+        // Toggle lock state on click
+        el.onclick = () => {
+            isLocked[i] = !isLocked[i];
+            if (isLocked[i]) {
+                el.classList.add('locked');
+            } else {
+                el.classList.remove('locked');
+            }
+        };
+    }
+
     const lockBtn = document.getElementById('btn-lock-breaker');
 
-    // Rapidly change colors
+    // Rapidly change colors for UNLOCKED boxes
     minigameInterval = setInterval(() => {
-        currentColor = colors[Math.floor(Math.random() * colors.length)];
-        flickerBox.style.background = currentColor;
-    }, 120); // 120ms makes it fast and challenging!
+        for (let i = 0; i < numPairs; i++) {
+            if (!isLocked[i]) {
+                currentColors[i] = colors[Math.floor(Math.random() * colors.length)];
+                flickerElements[i].style.background = currentColors[i];
+            }
+        }
+    }, 120);
 
     lockBtn.onclick = () => {
-        clearInterval(minigameInterval); // Freeze the color
-        
-        if (currentColor === targetColor) {
+        // Check if ALL pairs are locked and match their targets
+        let allMatch = true;
+        let allLocked = true;
+
+        for (let i = 0; i < numPairs; i++) {
+            if (!isLocked[i]) allLocked = false;
+            if (currentColors[i] !== targetColors[i]) allMatch = false;
+        }
+
+        if (!allLocked) {
+            lockBtn.innerText = "LOCK ALL BOXES FIRST!";
+            setTimeout(() => {
+                if (window.isTaskActive) lockBtn.innerText = "VERIFY CONNECTION";
+            }, 1000);
+            return;
+        }
+
+        if (allMatch) {
+            clearInterval(minigameInterval);
             successSound.play();
             breakerCount++;
-            window.cancelCurrentTask(); // Closes UI cleanly
+            window.cancelCurrentTask(); 
             
             if (breakerCount >= MAX_BREAKER) {
                 btnFixBreaker.style.color = "#00ff00";
@@ -286,17 +355,20 @@ function startBreakerMinigame() {
         } else {
             failSound.currentTime = 0;
             failSound.play();
-            // Wait a second, then restart the flickering
+            
+            // Reset state
             lockBtn.innerText = "FAILED! REBOOTING...";
             lockBtn.disabled = true;
+            
+            for (let i = 0; i < numPairs; i++) {
+                isLocked[i] = false;
+                flickerElements[i].classList.remove('locked');
+            }
+
             setTimeout(() => {
-                if (window.isTaskActive) { // Ensure they haven't canceled
-                    lockBtn.innerText = "LOCK CONNECTION";
+                if (window.isTaskActive) { 
+                    lockBtn.innerText = "VERIFY CONNECTION";
                     lockBtn.disabled = false;
-                    minigameInterval = setInterval(() => {
-                        currentColor = colors[Math.floor(Math.random() * colors.length)];
-                        flickerBox.style.background = currentColor;
-                    }, 120);
                 }
             }, 1000);
         }
@@ -310,7 +382,7 @@ function checkWinCondition() {
     }
 }
 
-// (Confetti and triggerWin logic remains untouched to preserve your ending sequence!)
+// Confetti and triggerWin logic remains untouched
 function launchConfetti() {
     const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'];
     for (let i = 0; i < 150; i++) {
@@ -376,7 +448,7 @@ function triggerWin() {
     const confettiCheer = new Audio('../Sounds/u_jspnqv1glx-1gift-confetti-447240.mp3');
 
     if (typeof window.completeNight === 'function') {
-        window.completeNight(3); // Updated to mark night 3 complete
+        window.completeNight(3); 
     } else {
         console.warn("Save system not found.");
     }
