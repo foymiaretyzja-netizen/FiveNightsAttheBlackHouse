@@ -28,8 +28,9 @@ let hasInteracted = false;
 // --- NEW: Global State for ZuckenBurger ---
 window.isOfficeDark = false; 
 
-const BASE_DRAIN = 0.33; 
-const SENSOR_POWER_COST = 1.5; 
+// --- UPDATED: Reduced Power Drain for Longer Night 3 ---
+const BASE_DRAIN = 0.15; // Reduced from 0.33 so ambient power lasts significantly longer
+const SENSOR_POWER_COST = 1.0; // Reduced from 1.5 to allow for more door checks between tasks
 
 // Global click listener to bypass Autoplay restrictions
 document.addEventListener('click', () => {
