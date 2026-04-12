@@ -3,48 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Night 3</title>
+    <title>Night 3 - Intro</title>
     <style>
+        /* Basic Setup for a cinematic black screen */
         body {
-            margin: 0;
-            padding: 0;
             background-color: #000;
             color: #fff;
-            font-family: "Courier New", Courier, monospace;
+            font-family: 'Courier New', Courier, monospace;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
             overflow: hidden;
-            cursor: pointer; /* Suggests the whole page is interactive if they miss the text */
+            text-align: center;
+            user-select: none;
         }
 
+        /* The interactive click screen (Copied from Night 2) */
+        #start-screen {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #aaa;
+            animation: slowPulse 2s infinite;
+            transition: opacity 1s ease-in-out;
+        }
+
+        @keyframes slowPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Text Containers */
         .text-container {
             position: absolute;
             opacity: 0;
-            text-align: center;
+            transition: opacity 2s ease-in-out;
         }
 
-        /* The start button */
-        #start-btn {
-            font-size: 1.2rem;
-            color: #888;
-            cursor: pointer;
-            transition: color 0.3s ease, opacity 0.3s ease;
-            opacity: 1;
-            z-index: 100;
-        }
-
-        #start-btn:hover {
-            color: #fff;
-        }
-
-        /* The slow fade for the warning */
+        /* The warning text */
         #warning-text {
             font-size: 1.5rem;
-            max-width: 800px;
+            max-width: 80%;
             line-height: 1.5;
-            transition: opacity 3s ease-in-out;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
         }
 
         /* The aggressive pop for the Night 3 title */
@@ -54,23 +63,15 @@
             letter-spacing: 10px;
             transition: opacity 0.2s ease-in; /* Faster fade in for impact */
         }
-
-        /* CSS class to trigger visibility */
-        .is-visible {
-            opacity: 1 !important;
-        }
-        
-        /* Slow fade out for the Night text */
-        .fade-out-slow {
-            opacity: 0 !important;
-            transition: opacity 3s ease-out !important;
-        }
     </style>
 </head>
 <body>
 
-    <div id="start-btn">[Click here to continue]</div>
+    <audio id="bg-music" src="Sounds/dragon-studio-horror-background-music-443137.mp3"></audio>
+    <audio id="boom-sound" src="Sounds/11325622-big-cine-boom-sound-effect-245851.mp3"></audio>
 
+    <div id="start-screen">[Click to continue to Night 3]</div>
+    
     <div id="warning-text" class="text-container">
         "You cannot hide from him, if you see him, just know he can't see in the dark."
     </div>
@@ -80,62 +81,68 @@
     </div>
 
     <script>
-        // --- Audio Setup ---
-        // Paths match exactly what you provided
-        const bgMusic = new Audio('Sounds/dragon-studio-horror-background-music-443137.mp3');
-        const boomSound = new Audio('Sounds/11325622-big-cine-boom-sound-effect-245851.mp3');
-
-        // Elements
-        const startBtn = document.getElementById('start-btn');
+        const startScreen = document.getElementById('start-screen');
         const warningText = document.getElementById('warning-text');
         const nightText = document.getElementById('night-text');
+        
+        const bgMusic = document.getElementById('bg-music');
+        const boomSound = document.getElementById('boom-sound');
 
-        // Wait for the player to click before starting the sequence
-        startBtn.addEventListener('click', () => {
-            // Hide the start button immediately
-            startBtn.style.opacity = '0';
-            setTimeout(() => startBtn.style.display = 'none', 300); // Remove from flow after fade
-
-            // 1. Start the eerie background music
+        // --- Trigger Sequence on Click ---
+        startScreen.addEventListener('click', function() {
+            
+            // 1. Play the ambient background music immediately
             bgMusic.volume = 0.6;
-            bgMusic.play().catch(e => console.log("Audio block:", e));
+            bgMusic.play().catch(e => console.log("Audio play failed:", e));
 
-            // 2. Fade in the warning text after 2 seconds
+            // 2. Fade out the start screen
+            this.style.opacity = '0';
+            
+            // Wait 1 second for the start screen to fade out, then begin sequence
             setTimeout(() => {
-                warningText.classList.add('is-visible');
-            }, 2000);
+                this.remove(); // Get it out of the way
 
-            // 3. Fade out the warning text after reading time (7 seconds later)
-            setTimeout(() => {
-                warningText.classList.remove('is-visible');
-            }, 9000);
+                // 3. Fade in Warning Text
+                setTimeout(() => {
+                    warningText.style.opacity = '1';
+                }, 500); 
 
-            // 4. Drop the "NIGHT 3" text and the boom sound (3 seconds after warning fades)
-            setTimeout(() => {
-                nightText.classList.add('is-visible');
-                boomSound.play().catch(e => console.log("Boom sound blocked", e));
-            }, 12000);
+                // 4. Fade out Warning Text
+                setTimeout(() => {
+                    warningText.style.opacity = '0';
+                }, 7500); 
 
-            // 5. Fade out "NIGHT 3" and the background music slowly
-            setTimeout(() => {
-                nightText.classList.add('fade-out-slow');
-                
-                // Audio fade out trick
-                let fadeAudio = setInterval(() => {
-                    if (bgMusic.volume > 0.1) {
-                        bgMusic.volume -= 0.1;
-                    } else {
-                        bgMusic.pause();
-                        clearInterval(fadeAudio);
-                    }
-                }, 200);
-            }, 16000);
+                // 5. BOOM! Fade in "NIGHT 3"
+                setTimeout(() => {
+                    nightText.style.opacity = '1';
+                    boomSound.play().catch(e => console.log("Boom play failed:", e));
+                }, 10500); 
 
-            // 6. Transition to the actual Night 3 gameplay file
-            setTimeout(() => {
-                window.location.href = 'night3.html'; 
-            }, 20000);
-        });
+                // 6. Fade out "NIGHT 3" slowly
+                setTimeout(() => {
+                    nightText.style.transition = 'opacity 3s ease-out';
+                    nightText.style.opacity = '0';
+                    
+                    // Fade out background music audio
+                    let fadeAudio = setInterval(() => {
+                        if (bgMusic.volume > 0.1) {
+                            bgMusic.volume -= 0.1;
+                        } else {
+                            bgMusic.pause();
+                            clearInterval(fadeAudio);
+                        }
+                    }, 200);
+                }, 14500); 
+
+                // 7. Redirect to Night 3
+                setTimeout(() => {
+                    window.location.href = 'night3.html';
+                }, 18500); 
+
+            }, 1000); // 1 second delay matches the CSS transition time
+            
+        }, { once: true }); // Ensures this only fires the very first time they click
     </script>
+
 </body>
 </html>
