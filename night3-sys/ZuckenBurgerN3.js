@@ -1,7 +1,7 @@
 // --- night3-sys/ZuckenBurgerN3.js ---
 
 // --- Audio Setup (Using placeholders you can swap later) ---
-const zuckArrivalSound = new Audio('../Sounds/alesiadavina-horror-sound-monster-breath-189934.mp3');
+const zuckArrivalSound = new Audio('../Sounds/dragon-studio-door-opening-454242.mp3');
 const zuckJumpscareSound = new Audio('../Sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3');
 
 // --- Sprite Setup ---
