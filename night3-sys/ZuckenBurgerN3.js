@@ -4,22 +4,22 @@
 const zuckArrivalSound = new Audio('../Sounds/dragon-studio-door-opening-454242.mp3');
 const zuckJumpscareSound = new Audio('../Sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3');
 
-// --- Sprite Setup ---
-let zuckSprite = document.getElementById('zuck-sprite-office');
+// --- Sprite Setup (FIXED NAMING COLLISION) ---
+let zuckOfficeSprite = document.getElementById('zuck-sprite-office');
 
-// Dynamically create the sprite if it doesn't exist in the HTML yet (Safety Fallback)
-if (!zuckSprite) {
-    zuckSprite = document.createElement('img');
-    zuckSprite.id = 'zuck-sprite-office';
-    zuckSprite.src = '../night3-sys/sprites/ZuckenBurger.png';
-    zuckSprite.style.display = 'none';
-    zuckSprite.style.position = 'absolute';
-    zuckSprite.style.left = '50%';
-    zuckSprite.style.top = '50%';
-    zuckSprite.style.transform = 'translate(-50%, -50%)';
-    zuckSprite.style.zIndex = '100'; 
-    zuckSprite.style.pointerEvents = 'none';
-    document.body.appendChild(zuckSprite);
+// Dynamically create the sprite if it doesn't exist in the HTML yet
+if (!zuckOfficeSprite) {
+    zuckOfficeSprite = document.createElement('img');
+    zuckOfficeSprite.id = 'zuck-sprite-office';
+    zuckOfficeSprite.src = '../night3-sys/sprites/ZuckenBurger.png';
+    zuckOfficeSprite.style.display = 'none';
+    zuckOfficeSprite.style.position = 'absolute';
+    zuckOfficeSprite.style.left = '50%';
+    zuckOfficeSprite.style.top = '50%';
+    zuckOfficeSprite.style.transform = 'translate(-50%, -50%)';
+    zuckOfficeSprite.style.zIndex = '100'; 
+    zuckOfficeSprite.style.pointerEvents = 'none';
+    document.body.appendChild(zuckOfficeSprite);
 }
 
 // --- AI State Variables ---
@@ -31,13 +31,12 @@ window.aiPositions.zuckenburger = 'Janitor Room';
 
 // Starts the AI after the initial delay
 function initZuckenBurger() {
-    console.log("[ZuckenBurger AI] Initialized. FORCE STARTING IN 3 SECONDS.");
-    
+    console.log("[ZuckenBurger AI] Initialized. Waiting 3 seconds...");
     setTimeout(() => {
         zuckActive = true;
-        console.log("[ZuckenBurger AI] ZuckenBurger is active. Forcing Office Attack!");
-        enterOffice(); // <-- Skips the waiting and forces him right into the office!
-    }, 3000); 
+        console.log("[ZuckenBurger AI] ZuckenBurger is now active.");
+        scheduleZuckAttack();
+    }, 3000); // Set to 3 seconds for testing!
 }
 
 // Randomizes the next attack between 15s and 26s
@@ -58,6 +57,8 @@ function enterOffice() {
 
     console.log("[ZuckenBurger AI] ZuckenBurger has entered the office! TURN OFF THE LIGHTS!");
     window.aiPositions.zuckenburger = 'Office';
+    
+    // Update Cameras if looking at Janitor Room
     if (typeof window.refreshCameraUI === 'function') window.refreshCameraUI();
     
     // Play an eerie arrival sound
@@ -69,8 +70,8 @@ function enterOffice() {
         window.toggleCamera();
     }
 
-    // Display the sprite
-    zuckSprite.style.display = 'block';
+    // Display the office sprite
+    zuckOfficeSprite.style.display = 'block';
 
     // Player has exactly 6 seconds to react
     zuckTimer = setTimeout(() => {
@@ -92,10 +93,10 @@ function checkZuckSurvival() {
 
 // ZuckenBurger resets to the Janitor Room
 function leaveOffice() {
-    zuckSprite.style.display = 'none';
+    zuckOfficeSprite.style.display = 'none';
     window.aiPositions.zuckenburger = 'Janitor Room';
     
-    // FIX 2: Ensure cameras update globally if he moves while they are open
+    // Ensure cameras update if open
     if (typeof window.refreshCameraUI === 'function') {
         window.refreshCameraUI();
     }
@@ -118,11 +119,11 @@ function triggerZuckJumpscare() {
     zuckJumpscareSound.currentTime = 0;
     zuckJumpscareSound.play().catch(e => console.warn("[Audio] Zuck jumpscare blocked:", e));
 
-    // FIX 1: Safely scale the sprite from the bottom center so it engulfs the screen
-    zuckSprite.style.transition = 'transform 0.15s ease-in, filter 0.15s ease-in';
-    zuckSprite.style.transformOrigin = 'bottom center';
-    zuckSprite.style.transform = 'scale(8)';
-    zuckSprite.style.filter = 'brightness(1.5) contrast(1.2)';
+    // Scale the sprite from the bottom center so it engulfs the screen
+    zuckOfficeSprite.style.transition = 'transform 0.15s ease-in, filter 0.15s ease-in';
+    zuckOfficeSprite.style.transformOrigin = 'bottom center';
+    zuckOfficeSprite.style.transform = 'scale(8)';
+    zuckOfficeSprite.style.filter = 'brightness(1.5) contrast(1.2)';
 
     setTimeout(() => {
         alert("ZUCKENBURGER HAS HARVESTED YOUR DATA.");
