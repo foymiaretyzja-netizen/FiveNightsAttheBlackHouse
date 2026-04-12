@@ -5,12 +5,13 @@ const btnCure = document.getElementById('btn-deport');
 const btnPs7 = document.getElementById('btn-missile'); 
 const btnCamera = document.getElementById('camera-btn');
 
-// --- Audio System (Fixed Paths) ---
-const taskAudio = new Audio('Sounds/alex_jauk-coffee-machine-noise-218424.mp3');
+// --- Audio System ---
+// Using ../ to ensure it routes out of night2-sys correctly
+const taskAudio = new Audio('../Sounds/alex_jauk-coffee-machine-noise-218424.mp3');
 
 function startTaskAudio() {
     taskAudio.currentTime = 0;
-    taskAudio.play().catch(e => console.log("Audio block:", e));
+    taskAudio.play().catch(e => console.log("[Tasks] Audio block:", e));
 }
 
 function stopTaskAudio() {
@@ -46,7 +47,7 @@ window.cancelCurrentTask = function() {
         activeTaskTimer = null;
         window.isTaskActive = false;
         
-        stopTaskAudio(); // Stop the sound if canceled
+        stopTaskAudio(); // Stop the sound if canceled by opening cameras or a jumpscare
         
         // Reset Button UI
         if (activeTaskType === 'cure') {
@@ -92,7 +93,7 @@ btnCure.addEventListener('click', () => {
         } else {
             clearInterval(activeTaskTimer);
             activeTaskTimer = null;
-            finishCure();
+            finishCure(); // Finishes task and stops audio
         }
     }, 1000);
 });
@@ -102,7 +103,7 @@ function finishCure() {
     window.isTaskActive = false;
     activeTaskType = null;
     
-    stopTaskAudio();
+    stopTaskAudio(); // Cuts off the 20s audio loop early
     setTaskButtonsDisabled(false);
     
     btnCure.style.color = "#ccc"; 
@@ -140,7 +141,7 @@ btnPs7.addEventListener('click', () => {
         } else {
             clearInterval(activeTaskTimer);
             activeTaskTimer = null;
-            finishPs7();
+            finishPs7(); // Finishes task and stops audio
         }
     }, 1000);
 });
@@ -150,7 +151,7 @@ function finishPs7() {
     window.isTaskActive = false;
     activeTaskType = null;
     
-    stopTaskAudio();
+    stopTaskAudio(); // Cuts off the 20s audio loop early
     setTaskButtonsDisabled(false);
     
     btnPs7.style.color = "#ccc";
@@ -234,11 +235,10 @@ function triggerWin() {
     winText.style.transition = 'opacity 3s ease-in-out 1.5s'; 
     document.body.appendChild(winText);
 
-    // Fixed Paths
-    const clockChime = new Audio('Sounds/li-bing-tower-clock-chimewestminster-187254.mp3');
-    const confettiCheer = new Audio('Sounds/u_jspnqv1glx-1gift-confetti-447240.mp3');
+    // Using ../ for consistent audio paths
+    const clockChime = new Audio('../Sounds/li-bing-tower-clock-chimewestminster-187254.mp3');
+    const confettiCheer = new Audio('../Sounds/u_jspnqv1glx-1gift-confetti-447240.mp3');
 
-    // Updated to Complete Night 2
     if (typeof window.completeNight === 'function') {
         window.completeNight(2); 
     } else {
@@ -247,17 +247,17 @@ function triggerWin() {
 
     setTimeout(() => { 
         fadeOutDiv.style.opacity = '1'; 
-        clockChime.play().catch(e => console.log("Audio block:", e));
+        clockChime.play().catch(e => console.log("[Tasks] Audio block:", e));
     }, 100);
 
     setTimeout(() => { 
         winText.style.opacity = '1'; 
-        confettiCheer.play().catch(e => console.log("Audio block:", e));
+        confettiCheer.play().catch(e => console.log("[Tasks] Audio block:", e));
         launchConfetti(); 
         
-        // Fixed Title Screen Path
+        // Return to title screen
         setTimeout(() => { 
-            window.location.href = 'title.html'; 
+            window.location.href = '../title.html'; 
         }, 15000);
         
     }, 2000); 
