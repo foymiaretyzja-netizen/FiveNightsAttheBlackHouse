@@ -4,10 +4,18 @@ const powerDisplay = document.getElementById('power-display');
 const panoramaBg = document.getElementById('office-panorama');
 const btnLights = document.getElementById('btn-lights');
 
-// NEW: UI elements for the motion sensors (ensure these match your HTML IDs)
+// UI elements for the motion sensors
 const btnSensorLeft = document.getElementById('btn-sensor-left');
 const btnSensorRight = document.getElementById('btn-sensor-right');
 const sensorDisplay = document.getElementById('sensor-display'); 
+
+// --- NEW: Audio Setup ---
+const lightSwitchSound = new Audio('../Sounds/soundreality-switch-150130.mp3');
+const lightHumSound = new Audio('../Sounds/freesound_community-fluoresent_light_hum_and_refrigerator-48831.mp3');
+lightHumSound.loop = true; // Make the hum loop endlessly
+
+const warningBeepSound = new Audio('../Sounds/freesound_community-beep-beep-43875.mp3');
+const clearBeepSound = new Audio('../Sounds/musheran-beep-313342.mp3');
 
 let power = 100.0;
 let isBlackout = false;
@@ -16,8 +24,11 @@ let lightsOn = true;
 // 100% / 300 seconds (5 mins) = ~0.33 drain per second
 const BASE_DRAIN = 0.33; 
 
-// NEW: Flat power penalty for pinging the motion scanner
+// Flat power penalty for pinging the motion scanner
 const SENSOR_POWER_COST = 1.5; 
+
+// Attempt to start the hum immediately (browsers may block this until the player clicks something)
+lightHumSound.play().catch(e => console.log("Ambient hum waiting for player interaction."));
 
 // Toggle Lights Button Logic
 if (btnLights) {
@@ -25,22 +36,32 @@ if (btnLights) {
         if (isBlackout) return; // Can't toggle lights if the power is already dead
 
         lightsOn = !lightsOn;
+        
+        // Play the physical click sound
+        lightSwitchSound.currentTime = 0;
+        lightSwitchSound.play().catch(() => {});
 
         if (lightsOn) {
             panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room.jpg')";
             btnLights.innerText = "Turn Off Lights";
             btnLights.style.borderColor = "#ffbb00";
             btnLights.style.color = "#ffbb00";
+            
+            // Resume the hum
+            lightHumSound.play().catch(() => {});
         } else {
             panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room-blackout.jpg')";
             btnLights.innerText = "Turn On Lights";
             btnLights.style.borderColor = "#555";
             btnLights.style.color = "#aaa";
+            
+            // Pause the hum
+            lightHumSound.pause();
         }
     });
 }
 
-// NEW: Motion Sensor Logic
+// Motion Sensor Logic
 function scanDoor(side) {
     if (isBlackout) return;
 
@@ -67,6 +88,15 @@ function scanDoor(side) {
     // Update feedback for the player
     const feedbackMsg = isEntityPresent ? `WARNING: MOTION AT ${side.toUpperCase()} DOOR` : `CLEAR: NO MOTION`;
     console.log(`[Motion Sensor] ${feedbackMsg}`);
+    
+    // --- NEW: Play corresponding scanner beep ---
+    if (isEntityPresent) {
+        warningBeepSound.currentTime = 0;
+        warningBeepSound.play().catch((e) => console.warn("Audio blocked:", e));
+    } else {
+        clearBeepSound.currentTime = 0;
+        clearBeepSound.play().catch((e) => console.warn("Audio blocked:", e));
+    }
     
     if (sensorDisplay) {
         sensorDisplay.innerText = feedbackMsg;
@@ -126,6 +156,9 @@ function triggerBlackout() {
     if (isBlackout) return; // Prevent multiple triggers
     isBlackout = true;
     lightsOn = false;
+    
+    // --- NEW: Kill the ambient lights hum ---
+    lightHumSound.pause();
     
     // Switch to dark room
     if (panoramaBg) panoramaBg.style.backgroundImage = "url('../Scenes/Presidential-room-blackout.jpg')";
