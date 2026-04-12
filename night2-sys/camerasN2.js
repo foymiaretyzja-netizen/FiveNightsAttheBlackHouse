@@ -2,13 +2,13 @@
 
 const cameraNav = document.getElementById('camera-nav');
 const cameraFeed = document.getElementById('camera-feed');
-const elongSprite = document.getElementById('elong-sprite'); // Charrlie is handled via background images now
+const elongSprite = document.getElementById('elong-sprite'); 
 
 const camUIMonitor = document.getElementById('camera-monitor');
 const camUILeftPanel = document.getElementById('left-panel');
 const camUIRightPanel = document.getElementById('right-panel');
 
-// Put the ../ back for audio
+// Audio setup
 const camSounds = [
     new Audio('../Sounds/freesound_community-aiwa-cx-930-vhs-vcr-video-cassette-recorderwav-14430.mp3'),
     new Audio('../Sounds/designerschoice-comav_vcr-rewinding-vhs-tape_nicholas-judy_tdc-493294.mp3')
@@ -16,23 +16,21 @@ const camSounds = [
 
 let currentCamAudio = null;
 
-// NEW FOR NIGHT 2: Global variable for Charrlie's phase in the Guest Room (with ../)
-window.currentGuestRoomImg = '../ScenesN2/guestroom-1.jpg';
-
-// Put the ../ back for the rooms
+// The static rooms (Guest Room is handled dynamically)
 const rooms = {
     'Conference Room': '../Scenes/Conference room.jpg',
     'Diner': '../Scenes/Diner.jpg',
-    'Guest Room': 'DYNAMIC', // Flagged so the script knows to use the window variable
+    'Guest Room': 'DYNAMIC', 
     'Janitor Room': '../Scenes/Janitor-room.jpg',
     'Kitchen': '../Scenes/Kitchen.jpg',
     'Storage': '../Scenes/Storage.jpg'
 };
 
-let currentCamera = 'Guest Room';
+// Expose the current camera globally so CharrlieAIN2.js knows what the player is looking at
+window.currentCamera = 'Guest Room'; 
 
 function setupCameraButtons() {
-    // Map path updated to StoryScenes, with ../ added back
+    // Map path updated to StoryScenes
     cameraNav.innerHTML = '<img id="camera-map-img" src="../StoryScenes/Screenshot 2026-04-10 9.12.19 PM.png" alt="Office Map">';
     
     for (const roomName in rooms) {
@@ -41,7 +39,7 @@ function setupCameraButtons() {
         btn.innerText = `CAM: ${roomName}`;
         
         btn.onclick = () => {
-            if (currentCamera === roomName) return;
+            if (window.currentCamera === roomName) return;
             document.querySelectorAll('.cam-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             switchCamera(roomName);
@@ -52,7 +50,7 @@ function setupCameraButtons() {
     
     const firstBtn = cameraNav.querySelector('.cam-btn');
     if (firstBtn) firstBtn.classList.add('active');
-    switchCamera(currentCamera, false);
+    switchCamera(window.currentCamera, false);
 }
 
 function playCameraSound() {
@@ -61,7 +59,7 @@ function playCameraSound() {
         currentCamAudio.currentTime = 0;
     }
     currentCamAudio = camSounds[Math.floor(Math.random() * camSounds.length)];
-    currentCamAudio.play().catch(e => console.log("Audio block", e));
+    currentCamAudio.play().catch(e => console.log("[Camera] Audio block", e));
 }
 
 // Global short flicker (for clicking buttons)
@@ -78,7 +76,7 @@ window.triggerLongFlicker = function(oldRoom, newRoom) {
     if (!window.isCameraOpen) return;
 
     if (oldRoom && newRoom) {
-        if (currentCamera !== oldRoom && currentCamera !== newRoom) {
+        if (window.currentCamera !== oldRoom && window.currentCamera !== newRoom) {
             return; 
         }
     }
@@ -103,16 +101,18 @@ function switchCamera(roomName, playAudio = true) {
         window.triggerFlicker(); 
     }
     
-    currentCamera = roomName;
+    window.currentCamera = roomName;
 
-    // --- NIGHT 2 GUEST ROOM LOGIC ---
+    // --- NIGHT 2 GUEST ROOM LOGIC (Stitched with Charrlie's AI) ---
     if (roomName === 'Guest Room') {
-        cameraFeed.style.backgroundImage = `url('${window.currentGuestRoomImg}')`;
+        // Reads Charrlie's stage directly from the window object. Defaults to 1 if the AI script hasn't loaded yet.
+        const stage = (typeof window.charrlieStage !== 'undefined') ? Math.min(window.charrlieStage, 4) : 1;
+        cameraFeed.style.backgroundImage = `url('../ScenesN2/guestroom-${stage}.jpg')`;
     } else {
         cameraFeed.style.backgroundImage = `url('${rooms[roomName]}')`;
     }
 
-    // --- AI SPRITE LOGIC ---
+    // --- AI SPRITE LOGIC (Elong) ---
     if (window.aiPositions && window.aiPositions.elong === roomName) {
         elongSprite.style.display = 'block';
     } else {
@@ -120,9 +120,10 @@ function switchCamera(roomName, playAudio = true) {
     }
 }
 
+// Called by AI scripts when they move, so the camera feed updates live
 window.refreshCameraUI = function() {
     if (window.isCameraOpen) {
-        switchCamera(currentCamera, false); 
+        switchCamera(window.currentCamera, false); 
     }
 };
 
@@ -136,7 +137,7 @@ window.toggleCamera = function() {
         
         playCameraSound();
         window.triggerFlicker();
-        switchCamera(currentCamera, false); 
+        switchCamera(window.currentCamera, false); 
     } else {
         camUIMonitor.style.transform = 'translateY(100%)'; 
         if (currentCamAudio) {
