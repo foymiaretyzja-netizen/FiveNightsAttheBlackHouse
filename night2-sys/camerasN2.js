@@ -25,14 +25,14 @@ const rooms = {
     'Guest Room': 'DYNAMIC', // Flagged so the script knows to use the window variable
     'Janitor Room': 'Scenes/Janitor-room.jpg',
     'Kitchen': 'Scenes/Kitchen.jpg',
-    'Storage': 'Scenes/Storage.jpg'
+    'Storage': 'Scenes/Storage.jpg' // Left this in from your earlier setup!
 };
 
 let currentCamera = 'Guest Room';
 
 function setupCameraButtons() {
-    // Updated path to night2-sys
-    cameraNav.innerHTML = '<img id="camera-map-img" src="night2-sys/sprites/Screenshot 2026-04-10 11.54.10 PM.png" alt="Office Map">';
+    // UPDATED: Fixed path to the map image in the StoryScenes folder
+    cameraNav.innerHTML = '<img id="camera-map-img" src="StoryScenes/Screenshot 2026-04-10 9.12.19 PM.png" alt="Office Map">';
     
     for (const roomName in rooms) {
         const btn = document.createElement('button');
