@@ -25,14 +25,27 @@ let elongAtDoor = false;
 let elongGraceTimer = null;
 let elongSoundLoop = null;
 
+// NEW: Dynamic timers to replace setInterval
+let elongMoveTimeout = null; 
+let elongLingerTimeout = null;
+
 let elongActive = false; 
 
-// FIX: Ensure the global object exists before trying to add Elong to it!
 window.aiPositions = window.aiPositions || {};
 window.aiPositions.elong = elongCurrentRoom;
 
+// NEW: Recursive AI Loop (Much better than setInterval for FNAF games)
+function loopElong() {
+    if (elongActive) {
+        moveElong();
+    }
+    // Schedule next move randomly between 12 and 15 seconds
+    elongMoveTimeout = setTimeout(loopElong, Math.random() * 3000 + 12000);
+}
+
 function moveElong() {
-    if (!elongActive || elongAtDoor || window.rightDoorClosed) return; 
+    // FIX: Removed `window.rightDoorClosed`. He can now roam the cameras even if the door is shut!
+    if (!elongActive || elongAtDoor) return; 
 
     console.log(`[Elong AI] Assessing move... Current location: ${elongCurrentRoom}`);
 
@@ -91,14 +104,15 @@ function triggerElongAtDoor() {
         }
     }, 10000);
 
+    // Bang on the door while waiting
     elongSoundLoop = setInterval(() => {
         if (Math.random() < 0.33) playElongHorrorSound();
-    }, 10000);
+    }, 5000); 
 }
 
 function handleElongLinger() {
     const lingerTime = Math.random() * 5000 + 5000;
-    setTimeout(() => {
+    elongLingerTimeout = setTimeout(() => {
         if (window.rightDoorClosed) {
             console.log(`[Elong AI] Gave up. Returning to Storage.`);
             resetElong();
@@ -111,11 +125,20 @@ function handleElongLinger() {
 
 function resetElong() {
     elongAtDoor = false;
+    
+    // Clear all possible door timers
     clearTimeout(elongGraceTimer);
+    clearTimeout(elongLingerTimeout);
     clearInterval(elongSoundLoop);
+    
     elongCurrentRoom = 'Storage';
     window.aiPositions.elong = elongCurrentRoom;
+    
     if (typeof window.refreshCameraUI === "function") window.refreshCameraUI();
+    
+    // FIX: Instantly restart his movement loop so he doesn't stall in Storage
+    clearTimeout(elongMoveTimeout);
+    elongMoveTimeout = setTimeout(loopElong, 5000); // Wait 5 seconds, then resume the hunt
 }
 
 function playElongHorrorSound() {
@@ -150,6 +173,6 @@ setTimeout(() => {
     elongActive = true;
     console.log("[Elong AI] 45 SECONDS PASSED: Elong is now active.");
     
-    moveElong();
-    setInterval(moveElong, 15000);
+    // Start the dynamic loop instead of setInterval
+    loopElong(); 
 }, 45000);
