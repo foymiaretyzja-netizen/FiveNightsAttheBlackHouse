@@ -5,7 +5,7 @@ const charrlieCreakSound = new Audio('../Sounds/dragon-studio-heavy-creaking-515
 const charrlieRunSound = new Audio('../Sounds/freesound_community-foley_footsteps_metal_001-77032.mp3');
 
 // --- AI State Variables ---
-let charrlieStage = 1; // Stages 1 to 4 (guestroom-1.jpg to guestroom-4.jpg)
+window.charrlieStage = 1; // CHANGED: Now global so camerasN2.js can see it!
 let charrlieState = 'waiting'; // 'waiting', 'progressing', 'dashing', 'bounced'
 let charrlieTimer;
 let charrlieTargetDoor = null;
@@ -38,18 +38,20 @@ function scheduleNextCharrlieMove() {
 function advanceCharrlieStage() {
     if (window.isBlackout) return;
 
-    charrlieStage++;
-    console.log(`[Charrlie AI] Advanced to Stage ${charrlieStage}`);
+    window.charrlieStage++; // CHANGED: Updating the global variable
+    console.log(`[Charrlie AI] Advanced to Stage ${window.charrlieStage}`);
     
-    // Update the camera feed immediately if the player happens to be watching him
-    updateGuestRoomCamera();
+    // Force the camera script to refresh the image if the player is watching
+    if (typeof window.refreshCameraUI === 'function') {
+        window.refreshCameraUI();
+    }
 
-    if (charrlieStage === 3) {
+    if (window.charrlieStage === 3) {
         // Play the heavy creaking sound
         charrlieCreakSound.currentTime = 0;
         charrlieCreakSound.play().catch(e => console.warn("[Audio] Charrlie creak blocked:", e));
         scheduleNextCharrlieMove();
-    } else if (charrlieStage >= 4) {
+    } else if (window.charrlieStage >= 4) {
         // Stage 4: He breaks into a sprint!
         startCharrlieDash();
     } else {
@@ -122,13 +124,16 @@ function checkCharrlieAttack() {
 // Charrlie returns to his starting position
 function resetCharrlie() {
     console.log("[Charrlie AI] Attack failed. Resetting to Guest Room.");
-    charrlieStage = 1;
+    window.charrlieStage = 1; // CHANGED: Reset the global variable
     charrlieState = 'progressing';
     window.aiPositions.charrlie = 'Guest Room';
     
     // Turn off camera static and update the room image
     applyDashStatic(false);
-    updateGuestRoomCamera();
+    
+    if (typeof window.refreshCameraUI === 'function') {
+        window.refreshCameraUI();
+    }
     
     // Start the cycle over
     scheduleNextCharrlieMove();
@@ -160,8 +165,6 @@ function triggerCharrlieJumpscare() {
     }
 }
 
-// --- Helper Functions ---
-
 // Controls the static overlay across all cameras while he runs
 function applyDashStatic(isActive) {
     const staticFlash = document.getElementById('static-flash');
@@ -171,19 +174,6 @@ function applyDashStatic(isActive) {
             staticFlash.style.background = "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat";
         } else {
             staticFlash.style.opacity = '0';
-        }
-    }
-}
-
-// Dynamically changes the Guest Room camera image based on his current stage
-function updateGuestRoomCamera() {
-    // Only swap the image if the player is currently viewing the Guest Room
-    if (window.currentCamera === 'Guest Room') {
-        const feed = document.getElementById('camera-feed');
-        if (feed) {
-            // Keep the image number between 1 and 4
-            const safeStage = Math.min(Math.max(charrlieStage, 1), 4);
-            feed.style.backgroundImage = `url('../ScenesN2/guestroom-${safeStage}.jpg')`;
         }
     }
 }
