@@ -155,9 +155,10 @@ function switchCamera(roomName, playAudio = true) {
         elongSprite.style.display = 'none';
     }
 
-    // ZuckenBurger's Sprite (Checks to ensure you added it to the HTML!)
+    // ZuckenBurger's Sprite
     if (zuckSprite) {
-        if (window.aiPositions && window.aiPositions.zuck === roomName) {
+        // UPDATED: Changed .zuck to .zuckenburger to correctly sync with ZuckenBurgerN3.js
+        if (window.aiPositions && window.aiPositions.zuckenburger === roomName) {
             zuckSprite.style.display = 'block';
         } else {
             zuckSprite.style.display = 'none';
