@@ -16,12 +16,27 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
+            cursor: pointer; /* Suggests the whole page is interactive if they miss the text */
         }
 
         .text-container {
             position: absolute;
             opacity: 0;
             text-align: center;
+        }
+
+        /* The start button */
+        #start-btn {
+            font-size: 1.2rem;
+            color: #888;
+            cursor: pointer;
+            transition: color 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
+            z-index: 100;
+        }
+
+        #start-btn:hover {
+            color: #fff;
         }
 
         /* The slow fade for the warning */
@@ -54,6 +69,8 @@
 </head>
 <body>
 
+    <div id="start-btn">[Click here to continue]</div>
+
     <div id="warning-text" class="text-container">
         "You cannot hide from him, if you see him, just know he can't see in the dark."
     </div>
@@ -64,19 +81,24 @@
 
     <script>
         // --- Audio Setup ---
-        // Make sure your audio paths match your repo structure!
+        // Paths match exactly what you provided
         const bgMusic = new Audio('Sounds/dragon-studio-horror-background-music-443137.mp3');
         const boomSound = new Audio('Sounds/11325622-big-cine-boom-sound-effect-245851.mp3');
 
-        // Text Elements
+        // Elements
+        const startBtn = document.getElementById('start-btn');
         const warningText = document.getElementById('warning-text');
         const nightText = document.getElementById('night-text');
 
-        // Sequence Timing
-        window.onload = () => {
-            // 1. Start the eerie background music immediately
-            bgMusic.volume = 0.6; // Slightly lowered so it's atmospheric, not deafening
-            bgMusic.play().catch(e => console.log("Audio autoplay blocked by browser", e));
+        // Wait for the player to click before starting the sequence
+        startBtn.addEventListener('click', () => {
+            // Hide the start button immediately
+            startBtn.style.opacity = '0';
+            setTimeout(() => startBtn.style.display = 'none', 300); // Remove from flow after fade
+
+            // 1. Start the eerie background music
+            bgMusic.volume = 0.6;
+            bgMusic.play().catch(e => console.log("Audio block:", e));
 
             // 2. Fade in the warning text after 2 seconds
             setTimeout(() => {
@@ -88,7 +110,7 @@
                 warningText.classList.remove('is-visible');
             }, 9000);
 
-            // 4. BAM. Drop the "NIGHT 3" text and the boom sound (3 seconds after warning fades)
+            // 4. Drop the "NIGHT 3" text and the boom sound (3 seconds after warning fades)
             setTimeout(() => {
                 nightText.classList.add('is-visible');
                 boomSound.play().catch(e => console.log("Boom sound blocked", e));
@@ -109,12 +131,11 @@
                 }, 200);
             }, 16000);
 
-            // 6. Transition to the actual Night 3 gameplay file!
+            // 6. Transition to the actual Night 3 gameplay file
             setTimeout(() => {
-                // Change this if your night 3 file has a different name
                 window.location.href = 'night3.html'; 
             }, 20000);
-        };
+        });
     </script>
 </body>
 </html>
