@@ -4,10 +4,9 @@
 const zuckArrivalSound = new Audio('../Sounds/dragon-studio-door-opening-454242.mp3');
 const zuckJumpscareSound = new Audio('../Sounds/sound_effects75-eyesaur-jumpscare-sound-482110.mp3');
 
-// --- Sprite Setup (FIXED NAMING COLLISION) ---
+// --- Sprite Setup ---
 let zuckOfficeSprite = document.getElementById('zuck-sprite-office');
 
-// Dynamically create the sprite if it doesn't exist in the HTML yet
 if (!zuckOfficeSprite) {
     zuckOfficeSprite = document.createElement('img');
     zuckOfficeSprite.id = 'zuck-sprite-office';
@@ -29,21 +28,21 @@ let zuckActive = false;
 window.aiPositions = window.aiPositions || {};
 window.aiPositions.zuckenburger = 'Janitor Room';
 
-// Starts the AI after the initial delay
+// 1. Starts the AI. Waits exactly 35 seconds, then attacks immediately.
 function initZuckenBurger() {
-    console.log("[ZuckenBurger AI] Initialized. Waiting 3 seconds...");
+    console.log("[ZuckenBurger AI] Initialized. Grace period active. First attack in 35 seconds...");
     setTimeout(() => {
         zuckActive = true;
-        console.log("[ZuckenBurger AI] ZuckenBurger is now active.");
-        scheduleZuckAttack();
-    }, 3000); // Set to 3 seconds for testing!
+        enterOffice(); 
+    }, 35000); 
 }
 
-// Randomizes the next attack between 15s and 26s
+// 2. Randomizes the next attack between 15s and 24s (for subsequent loops)
 function scheduleZuckAttack() {
     if (window.isBlackout) return;
 
-    const nextAttackTime = Math.floor(Math.random() * 11000) + 15000; 
+    // Math.random() * 10000 gives 0-9.9k. Adding 15000 gives exactly 15s to 24.9s
+    const nextAttackTime = Math.floor(Math.random() * 10000) + 15000; 
     console.log(`[ZuckenBurger AI] Next attack in ${nextAttackTime / 1000} seconds.`);
 
     zuckTimer = setTimeout(() => {
@@ -51,7 +50,7 @@ function scheduleZuckAttack() {
     }, nextAttackTime);
 }
 
-// ZuckenBurger bypasses doors and enters the office
+// 3. ZuckenBurger bypasses doors and enters the office
 function enterOffice() {
     if (window.isBlackout) return;
 
@@ -79,7 +78,7 @@ function enterOffice() {
     }, 6000);
 }
 
-// Evaluate if the player turned off the lights in time
+// 4. Evaluate if the player turned off the lights in time
 function checkZuckSurvival() {
     // If the power went out, the lights are technically off, which saves the player
     if (window.isOfficeDark || window.isBlackout) {
@@ -91,7 +90,7 @@ function checkZuckSurvival() {
     }
 }
 
-// ZuckenBurger resets to the Janitor Room
+// 5. ZuckenBurger resets to the Janitor Room
 function leaveOffice() {
     zuckOfficeSprite.style.display = 'none';
     window.aiPositions.zuckenburger = 'Janitor Room';
@@ -101,11 +100,11 @@ function leaveOffice() {
         window.refreshCameraUI();
     }
     
-    // Start the attack cycle over
+    // Start the attack cycle over (now using the 15-24 second randomizer)
     scheduleZuckAttack();
 }
 
-// The game over sequence
+// 6. The game over sequence
 function triggerZuckJumpscare() {
     // Hide UI elements to focus on the scare
     const mon = document.getElementById('camera-monitor');
@@ -115,6 +114,10 @@ function triggerZuckJumpscare() {
     const rightPanel = document.getElementById('right-panel');
     if (rightPanel) rightPanel.style.display = 'none';
 
+    // Force his visibility back to normal in case the jumpscare triggers the split-second lights toggle
+    zuckOfficeSprite.style.opacity = '1';
+    zuckOfficeSprite.style.filter = 'brightness(1.5) contrast(1.2)';
+
     // Play Jumpscare Audio
     zuckJumpscareSound.currentTime = 0;
     zuckJumpscareSound.play().catch(e => console.warn("[Audio] Zuck jumpscare blocked:", e));
@@ -123,13 +126,33 @@ function triggerZuckJumpscare() {
     zuckOfficeSprite.style.transition = 'transform 0.15s ease-in, filter 0.15s ease-in';
     zuckOfficeSprite.style.transformOrigin = 'bottom center';
     zuckOfficeSprite.style.transform = 'scale(8)';
-    zuckOfficeSprite.style.filter = 'brightness(1.5) contrast(1.2)';
 
     setTimeout(() => {
         alert("ZUCKENBURGER HAS HARVESTED YOUR DATA.");
         location.reload();
     }, 1500);
 }
+
+// 7. REAL-TIME LIGHTING SYNC (Makes him dark with the room)
+setInterval(() => {
+    // Only apply the visual change if he is actively in the office
+    if (zuckActive && zuckOfficeSprite.style.display === 'block') {
+        
+        // Prevent him from dimming if he is currently in the middle of his jumpscare zoom
+        if (zuckOfficeSprite.style.transform.includes('scale(8)')) return;
+
+        if (window.isOfficeDark || window.isBlackout) {
+            // Drop opacity and brightness to make him a spooky silhouette
+            zuckOfficeSprite.style.opacity = '0.2';
+            zuckOfficeSprite.style.filter = 'brightness(0)';
+            zuckOfficeSprite.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
+        } else {
+            // Lights are on, fully visible
+            zuckOfficeSprite.style.opacity = '1';
+            zuckOfficeSprite.style.filter = 'brightness(1)';
+        }
+    }
+}, 100); // Checks every 100 milliseconds for seamless syncing
 
 // Kick off the AI!
 initZuckenBurger();
