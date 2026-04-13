@@ -50,9 +50,9 @@
         .night-title {
             font-size: 6rem !important;
             font-weight: bold;
-            color: #ff4444; /* Dark, bloody red for the final reveal */
+            color: #ffffff; /* Pure white for Night 4 */
             letter-spacing: 8px;
-            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.6); /* White glow */
         }
     </style>
 </head>
@@ -70,28 +70,26 @@
         const riserTrack = new Audio('../Sounds/dragon-studio-cinematic-riser-01-414574.mp3');
         const boomTrack = new Audio('../Sounds/dragon-studio-cinematic-boom-335489.mp3');
 
-        // The sequence array lets us easily control what the text says and how long it stays on screen (in milliseconds)
+        // We added specific flags to the lines where you want the audio to trigger
         const sequence = [
             { text: "Something got in.", duration: 3500 },
             { text: "3 things got in.", duration: 3500 },
-            { text: "2 left, but 3 came.", duration: 4000, playSound: true }, // Audio initiates here!
-            { text: "Darkness fuels him, make sure to keep the lights on.", duration: 4500 },
+            { text: "2 left, but 3 came.", duration: 4000 }, 
+            { text: "Darkness fuels him, make sure to keep the lights on.", duration: 4500, playSuspense: true }, // Starts Suspense
             { text: "It is here as well, he will blind you from your tools, you must be wary.", duration: 5000 },
-            { text: "You can't hide from him, you must use your tools precisely.", duration: 5000 },
+            { text: "You can't hide from him, you must use your tools precisely.", duration: 5000, playRiserAndBoom: true }, // Fades Suspense, Starts Riser & Boom
             { text: "NIGHT 4", duration: 5000, isTitle: true }
         ];
 
-        // Start the sequence when the player clicks the button
         startBtn.addEventListener('click', () => {
             startBtn.style.opacity = '0';
             setTimeout(() => {
                 startBtn.style.display = 'none';
                 runIntroSequence(0);
-            }, 500); // Wait for button to fade out
+            }, 500); 
         });
 
         function runIntroSequence(index) {
-            // If we've reached the end of the text, move to the actual game
             if (index >= sequence.length) {
                 window.location.href = 'night4.html';
                 return;
@@ -100,22 +98,35 @@
             const step = sequence[index];
 
             // --- AUDIO TIMING LOGIC ---
-            if (step.playSound) {
-                // 1. Play Main Suspense Track
+            
+            // Trigger 1: Start Suspense Music
+            if (step.playSuspense) {
                 suspenseTrack.currentTime = 0;
+                suspenseTrack.volume = 1;
                 suspenseTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
+            }
 
-                // 2. Play Riser at exactly 13 seconds
-                setTimeout(() => {
-                    riserTrack.currentTime = 0;
-                    riserTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
-                }, 13000);
+            // Trigger 2: Fade Suspense, Start Riser, and time the Boom
+            if (step.playRiserAndBoom) {
+                // Fade out the suspense track over about 2 seconds
+                let fadeInterval = setInterval(() => {
+                    if (suspenseTrack.volume > 0.05) {
+                        suspenseTrack.volume -= 0.05;
+                    } else {
+                        suspenseTrack.pause();
+                        clearInterval(fadeInterval);
+                    }
+                }, 100);
 
-                // 3. Play Boom 2.6 seconds into the Riser (15.6 seconds total)
+                // Play the Riser
+                riserTrack.currentTime = 0;
+                riserTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
+
+                // Play the Boom exactly 2.6 seconds later
                 setTimeout(() => {
                     boomTrack.currentTime = 0;
                     boomTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
-                }, 15600); 
+                }, 2600);
             }
 
             // Apply special styling if it's the final "NIGHT 4" title
