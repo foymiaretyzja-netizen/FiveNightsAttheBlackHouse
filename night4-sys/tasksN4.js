@@ -138,6 +138,12 @@ if (btnFixVents) {
     btnFixVents.innerText = `Fix Air Vents (${ventsCount}/${MAX_VENTS})`;
     btnFixVents.addEventListener('click', () => {
         if (typeof isBlackout !== 'undefined' && isBlackout) return; 
+        // --- NEW: Bezoid Sabotage Check ---
+        if (window.systemCompromised) {
+            console.log("[Tasks] Offline! System Compromised by Bezoid.");
+            return;
+        }
+        // ----------------------------------
         if (window.isTaskActive || ventsCount >= MAX_VENTS) return;
 
         window.isTaskActive = true;
@@ -177,7 +183,14 @@ function startVentsMinigame() {
     function animateVents() {
         if (!window.isTaskActive || activeTaskType !== 'vents') return;
 
-        // NEW: Check if we are currently holding the max progress
+        // --- NEW: Kick player out if Bezoid sabotages while playing ---
+        if (window.systemCompromised) {
+            window.cancelCurrentTask();
+            return;
+        }
+        // --------------------------------------------------------------
+
+        // Check if we are currently holding the max progress
         if (ventHoldFrames > 0) {
             ventHoldFrames--;
         } else {
@@ -230,7 +243,7 @@ function handleVentSpam() {
     ventProgress += 12; // Amount of progress per click
     if (ventProgress >= 100) {
         ventProgress = 100;
-        ventHoldFrames = 60; // NEW: Hold at max for roughly 1 second (at 60fps)
+        ventHoldFrames = 60; // Hold at max for roughly 1 second (at 60fps)
     }
 }
 
@@ -248,6 +261,12 @@ if (btnCalibrate) {
     btnCalibrate.innerText = `Calibrate Systems (${calibrateCount}/${MAX_CALIBRATE})`;
     btnCalibrate.addEventListener('click', () => {
         if (typeof isBlackout !== 'undefined' && isBlackout) return;
+        // --- NEW: Bezoid Sabotage Check ---
+        if (window.systemCompromised) {
+            console.log("[Tasks] Offline! System Compromised by Bezoid.");
+            return;
+        }
+        // ----------------------------------
         if (window.isTaskActive || calibrateCount >= MAX_CALIBRATE) return;
 
         window.isTaskActive = true;
@@ -266,7 +285,7 @@ function startCalibrateMinigame() {
     // Scale Difficulty: First 2 completions = 2 boxes. Last 3 completions = 5 boxes.
     const numZones = calibrateCount < 2 ? 2 : 5;
     
-    // UPDATED: Much gentler speed scaling so it stays beatable
+    // Much gentler speed scaling so it stays beatable
     cursorSpeed = 2.0 + (calibrateCount * 0.25);
     cursorX = 0;
     cursorDir = 1;
@@ -308,6 +327,13 @@ function startCalibrateMinigame() {
 
     function animateCalibrate() {
         if (!window.isTaskActive || activeTaskType !== 'calibrate') return;
+
+        // --- NEW: Kick player out if Bezoid sabotages while playing ---
+        if (window.systemCompromised) {
+            window.cancelCurrentTask();
+            return;
+        }
+        // --------------------------------------------------------------
 
         cursorX += cursorSpeed * cursorDir;
         if (cursorX <= 0 || cursorX >= trackWidth - 4) {
