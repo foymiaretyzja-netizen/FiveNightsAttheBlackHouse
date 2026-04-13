@@ -70,15 +70,15 @@
         const riserTrack = new Audio('../Sounds/dragon-studio-cinematic-riser-01-414574.mp3');
         const boomTrack = new Audio('../Sounds/dragon-studio-cinematic-boom-335489.mp3');
 
-        // We added specific flags to the lines where you want the audio to trigger
+        // Sequence updated with your precise audio triggers
         const sequence = [
             { text: "Something got in.", duration: 3500 },
             { text: "3 things got in.", duration: 3500 },
             { text: "2 left, but 3 came.", duration: 4000 }, 
-            { text: "Darkness fuels him, make sure to keep the lights on.", duration: 4500, playSuspense: true }, // Starts Suspense
+            { text: "Darkness fuels him, make sure to keep the lights on.", duration: 4500, playSuspense: true }, // Suspense starts here!
             { text: "It is here as well, he will blind you from your tools, you must be wary.", duration: 5000 },
-            { text: "You can't hide from him, you must use your tools precisely.", duration: 5000, playRiserAndBoom: true }, // Fades Suspense, Starts Riser & Boom
-            { text: "NIGHT 4", duration: 5000, isTitle: true }
+            { text: "You can't hide from him, you must use your tools precisely.", duration: 5000 },
+            { text: "NIGHT 4", isTitle: true } // Handled separately for exact sync
         ];
 
         startBtn.addEventListener('click', () => {
@@ -90,25 +90,18 @@
         });
 
         function runIntroSequence(index) {
-            if (index >= sequence.length) {
-                window.location.href = 'night4.html';
-                return;
-            }
-
             const step = sequence[index];
 
-            // --- AUDIO TIMING LOGIC ---
-            
-            // Trigger 1: Start Suspense Music
+            // 1. Trigger Suspense Music
             if (step.playSuspense) {
                 suspenseTrack.currentTime = 0;
                 suspenseTrack.volume = 1;
                 suspenseTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
             }
 
-            // Trigger 2: Fade Suspense, Start Riser, and time the Boom
-            if (step.playRiserAndBoom) {
-                // Fade out the suspense track over about 2 seconds
+            // 2. SPECIAL LOGIC FOR THE FINAL TITLE REVEAL
+            if (step.isTitle) {
+                // Fade out the suspense track
                 let fadeInterval = setInterval(() => {
                     if (suspenseTrack.volume > 0.05) {
                         suspenseTrack.volume -= 0.05;
@@ -118,25 +111,36 @@
                     }
                 }, 100);
 
-                // Play the Riser
+                // Start the Riser in the dark
                 riserTrack.currentTime = 0;
                 riserTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
 
-                // Play the Boom exactly 2.6 seconds later
+                // Wait EXACTLY 2.6 seconds (2600ms) for the sync
                 setTimeout(() => {
+                    // Play Boom!
                     boomTrack.currentTime = 0;
                     boomTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
-                }, 2600);
+
+                    // Show "NIGHT 4" exactly as the Boom hits
+                    introText.innerText = step.text;
+                    introText.classList.add('night-title');
+                    introText.style.opacity = '1';
+
+                    // Wait 5 seconds on the title screen, then load Night 4
+                    setTimeout(() => {
+                        introText.style.opacity = '0'; 
+                        setTimeout(() => {
+                            window.location.href = 'night4.html';
+                        }, 1500);
+                    }, 5000);
+
+                }, 2600); 
+
+                return; // Stop the rest of the function so the title logic runs uninterrupted
             }
 
-            // Apply special styling if it's the final "NIGHT 4" title
-            if (step.isTitle) {
-                introText.classList.add('night-title');
-            } else {
-                introText.classList.remove('night-title');
-            }
-
-            // Show the text
+            // 3. STANDARD TEXT LOGIC (For lines 1 through 6)
+            introText.classList.remove('night-title');
             introText.innerText = step.text;
             introText.style.opacity = '1';
 
