@@ -1,8 +1,8 @@
 // --- night3-sys/tasksN3.js ---
 
-// Re-using old IDs, but updating variable names for Night 3 context
+// Re-using old IDs, updated variables to match our new Wires task
 const btnRepairLights = document.getElementById('btn-deport'); 
-const btnFixBreaker = document.getElementById('btn-missile'); 
+const btnFixWires = document.getElementById('btn-missile'); 
 const btnCamera = document.getElementById('camera-btn');
 
 // --- Audio System ---
@@ -24,10 +24,10 @@ function stopTaskAudio() {
 
 // --- Task Variables ---
 let lightsCount = 0;
-const MAX_LIGHTS = 10; // Increased to 10 for scaling difficulty
+const MAX_LIGHTS = 10; 
 
-let breakerCount = 0;
-const MAX_BREAKER = 10; // Increased to 10
+let wiresCount = 0;
+const MAX_WIRES = 5; // Updated to 5 tasks total!
 
 window.isTaskActive = false; 
 
@@ -58,20 +58,19 @@ styles.innerHTML = `
     .slider { width: 100%; height: 40px; background: #00ff00; position: absolute; left: 0; box-shadow: 0 0 10px #00ff00; }
     .slider.paused { background: #ffaa00; box-shadow: 0 0 10px #ffaa00; }
     .track-btn { margin-top: 10px; padding: 10px; width: 100%; cursor: pointer; font-weight: bold; background: #444; color: #fff; border: 2px solid #666; }
-    /* Breaker Task CSS */
-    .breaker-container { display: flex; gap: 20px; justify-content: center; margin: 20px 0; flex-wrap: wrap; }
-    .color-pair { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .color-box { width: 80px; height: 80px; border: 4px solid #fff; border-radius: 10px; }
-    .flicker-box { cursor: pointer; transition: transform 0.1s; }
-    .flicker-box:active { transform: scale(0.9); }
-    .flicker-box.locked { border-color: #ffaa00; box-shadow: 0 0 15px #ffaa00; }
-    .breaker-btn { padding: 15px 30px; font-size: 1.2rem; cursor: pointer; font-weight: bold; background: #ff4444; color: white; border: 2px solid #ffaaaa; margin-top: 20px; }
+    
+    /* Wires Task CSS */
+    .wires-container { position: relative; display: flex; justify-content: space-between; width: 320px; height: 280px; margin: 20px auto; }
+    .wire-col { display: flex; flex-direction: column; justify-content: space-around; z-index: 2; }
+    .wire-node { width: 35px; height: 35px; border-radius: 50%; border: 4px solid #ccc; cursor: pointer; position: relative; transition: transform 0.1s; }
+    .wire-node.left-node::after { content: ''; position: absolute; right: -15px; top: 12px; width: 15px; height: 5px; background: inherit; }
+    .wire-node.right-node::before { content: ''; position: absolute; left: -15px; top: 12px; width: 15px; height: 5px; background: inherit; }
     .cancel-hint { margin-top: 20px; color: #aaa; font-size: 0.9rem; }
 `;
 document.head.appendChild(styles);
 
 // Click off minigame to cancel
-minigameOverlay.addEventListener('click', (e) => {
+minigameOverlay.addEventListener('mousedown', (e) => {
     if (e.target === minigameOverlay) {
         window.cancelCurrentTask();
     }
@@ -79,7 +78,7 @@ minigameOverlay.addEventListener('click', (e) => {
 
 function setTaskButtonsDisabled(disabled) {
     if (btnRepairLights) btnRepairLights.disabled = disabled || (lightsCount >= MAX_LIGHTS);
-    if (btnFixBreaker) btnFixBreaker.disabled = disabled || (breakerCount >= MAX_BREAKER);
+    if (btnFixWires) btnFixWires.disabled = disabled || (wiresCount >= MAX_WIRES);
 }
 
 // --- Cancellation Logic ---
@@ -91,15 +90,23 @@ window.cancelCurrentTask = function() {
         cancelAnimationFrame(minigameAnimationFrame);
         clearInterval(minigameInterval);
         
+        // Unbind Wire Drag Listeners globally so they don't leak
+        if (window._wireMouseMove) {
+            document.removeEventListener('mousemove', window._wireMouseMove);
+            document.removeEventListener('touchmove', window._wireMouseMove);
+            document.removeEventListener('mouseup', window._wireMouseUp);
+            document.removeEventListener('touchend', window._wireMouseUp);
+        }
+        
         minigameOverlay.style.display = 'none';
         minigameOverlay.innerHTML = ''; // Clear contents
 
         if (activeTaskType === 'lights') {
             btnRepairLights.style.color = "#ccc";
             btnRepairLights.innerText = `Repair Lights (${lightsCount}/${MAX_LIGHTS})`;
-        } else if (activeTaskType === 'breaker') {
-            btnFixBreaker.style.color = "#ccc";
-            btnFixBreaker.innerText = `Fix Breaker (${breakerCount}/${MAX_BREAKER})`;
+        } else if (activeTaskType === 'wires') {
+            btnFixWires.style.color = "#ccc";
+            btnFixWires.innerText = `Connect Wires (${wiresCount}/${MAX_WIRES})`;
         }
         
         setTaskButtonsDisabled(false);
@@ -139,11 +146,10 @@ function startLightsMinigame() {
     
     // Calculate difficulty: Base 3 tracks, +1 for every 3 completions
     const numTracks = 3 + Math.floor(lightsCount / 3);
-    const baseSpeeds = [1.5, 2.0, 2.5]; // Slower start
+    const baseSpeeds = [1.5, 2.0, 2.5]; 
     
     const sliders = [];
     for (let i = 0; i < numTracks; i++) {
-        // Fast speeds for extra tracks
         let spd = i < 3 ? baseSpeeds[i] : (3.5 + (i - 3)); 
         sliders.push({ 
             y: Math.random() * 150, 
@@ -164,10 +170,8 @@ function startLightsMinigame() {
     const container = document.getElementById('track-container');
     const sliderEls = [];
 
-    // Build the tracks dynamically
     for (let i = 0; i < numTracks; i++) {
         const trackWrap = document.createElement('div');
-        
         const track = document.createElement('div');
         track.className = 'track';
         
@@ -192,20 +196,16 @@ function startLightsMinigame() {
         container.appendChild(trackWrap);
     }
 
-    // Animation Loop
     function animateLights() {
         for (let i = 0; i < numTracks; i++) {
             if (!sliders[i].paused) {
                 sliders[i].y += sliders[i].speed * sliders[i].dir;
-                if (sliders[i].y <= 0 || sliders[i].y >= 160) { // 200 track - 40 slider
-                    sliders[i].dir *= -1;
-                }
+                if (sliders[i].y <= 0 || sliders[i].y >= 160) sliders[i].dir *= -1;
                 sliderEls[i].style.top = `${sliders[i].y}px`;
             }
         }
         minigameAnimationFrame = requestAnimationFrame(animateLights);
     }
-    
     animateLights();
 }
 
@@ -214,7 +214,7 @@ function checkLightsWin(sliders) {
         const ys = sliders.map(s => s.y);
         const diff = Math.max(...ys) - Math.min(...ys);
 
-        if (diff < 25) { // 25px tolerance for overlap
+        if (diff < 25) { 
             successSound.play();
             lightsCount++;
             window.cancelCurrentTask(); 
@@ -229,160 +229,219 @@ function checkLightsWin(sliders) {
         } else {
             failSound.currentTime = 0;
             failSound.play();
-            // Automatically unpause them so the player has to try again
             document.querySelectorAll('.track-btn').forEach(btn => btn.click());
         }
     }
 }
 
 // ==========================================
-// TASK 2: FIX BREAKER (COLOR MATCH MINIGAME)
+// TASK 2: CONNECT WIRES (DRAG & DROP MINIGAME)
 // ==========================================
-if (btnFixBreaker) {
-    btnFixBreaker.innerText = `Fix Breaker (${breakerCount}/${MAX_BREAKER})`;
-    btnFixBreaker.addEventListener('click', () => {
+if (btnFixWires) {
+    btnFixWires.innerText = `Connect Wires (${wiresCount}/${MAX_WIRES})`;
+    btnFixWires.addEventListener('click', () => {
         if (typeof isBlackout !== 'undefined' && isBlackout) return;
-        if (window.isTaskActive || breakerCount >= MAX_BREAKER) return;
+        if (window.isTaskActive || wiresCount >= MAX_WIRES) return;
 
         window.isTaskActive = true;
-        activeTaskType = 'breaker';
+        activeTaskType = 'wires';
         setTaskButtonsDisabled(true);
-        btnFixBreaker.style.color = "#ffaa00"; 
+        btnFixWires.style.color = "#ffaa00"; 
         
         startTaskAudio();
-        startBreakerMinigame();
+        startWiresMinigame();
     });
 }
 
-function startBreakerMinigame() {
+function startWiresMinigame() {
     minigameOverlay.style.display = 'flex';
     
-    // Scale difficulty: +1 pair every 2 completed breakers
-    const numPairs = 1 + Math.floor(breakerCount / 2);
-    const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+    // Scale Difficulty: First 3 completions = 3 wires. Last 2 completions = 5 wires.
+    const numWires = wiresCount < 3 ? 3 : 5;
+    const allColors = ['#ff4444', '#44ff44', '#4444ff', '#ffff44', '#ff44ff'];
+    const activeColors = allColors.slice(0, numWires);
     
-    let targetColors = [];
-    let currentColors = [];
-    let isLocked = [];
-
-    // Generate UI
-    let pairsHTML = '';
-    for (let i = 0; i < numPairs; i++) {
-        const target = colors[Math.floor(Math.random() * colors.length)];
-        targetColors.push(target);
-        currentColors.push('');
-        isLocked.push(false);
-
-        pairsHTML += `
-            <div class="color-pair">
-                <div class="color-box" style="background: ${target}; border-radius: 50%;"></div>
-                <div class="color-box flicker-box" id="flicker-box-${i}"></div>
-            </div>
-        `;
-    }
+    // Shuffle Left and Right independently
+    const leftColors = [...activeColors].sort(() => Math.random() - 0.5);
+    const rightColors = [...activeColors].sort(() => Math.random() - 0.5);
 
     minigameOverlay.innerHTML = `
-        <div class="minigame-box">
-            <h2>RE-ROUTE BREAKER</h2>
-            <p style="margin-bottom: 10px;">Click the flickering boxes to lock their color!</p>
-            <div class="breaker-container">
-                ${pairsHTML}
+        <div class="minigame-box" style="width: 400px; touch-action: none;">
+            <h2>RE-ROUTE POWER</h2>
+            <p style="margin-bottom: 10px;">Drag wires to match colors!</p>
+            <div class="wires-container" id="wires-container">
+                <svg id="wire-svg" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; overflow:visible;"></svg>
+                <div class="wire-col" id="left-wires"></div>
+                <div class="wire-col" id="right-wires"></div>
             </div>
-            <button class="breaker-btn" id="btn-lock-breaker">VERIFY CONNECTION</button>
             <div class="cancel-hint">Click outside the box to cancel</div>
         </div>
     `;
 
-    const flickerElements = [];
-    for (let i = 0; i < numPairs; i++) {
-        const el = document.getElementById(`flicker-box-${i}`);
-        flickerElements.push(el);
-        
-        // Toggle lock state on click
-        el.onclick = () => {
-            isLocked[i] = !isLocked[i];
-            if (isLocked[i]) {
-                el.classList.add('locked');
-            } else {
-                el.classList.remove('locked');
-            }
+    const leftCol = document.getElementById('left-wires');
+    const rightCol = document.getElementById('right-wires');
+
+    // Build the nodes
+    leftColors.forEach(color => {
+        const node = document.createElement('div');
+        node.className = 'wire-node left-node';
+        node.style.backgroundColor = color;
+        node.dataset.color = color;
+        leftCol.appendChild(node);
+    });
+
+    rightColors.forEach(color => {
+        const node = document.createElement('div');
+        node.className = 'wire-node right-node';
+        node.style.backgroundColor = color;
+        node.dataset.color = color;
+        rightCol.appendChild(node);
+    });
+
+    // --- Drag Logic ---
+    let selectedColor = null;
+    let selectedNode = null;
+    const connections = {};
+    const svg = document.getElementById('wire-svg');
+
+    // Create the active tracking line
+    const activeLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    activeLine.setAttribute('stroke-width', '10');
+    activeLine.setAttribute('stroke-linecap', 'round');
+    activeLine.style.display = 'none';
+    svg.appendChild(activeLine);
+
+    // Get exact center of a node to anchor the lines
+    function getCoords(element) {
+        const containerRect = document.getElementById('wires-container').getBoundingClientRect();
+        const rect = element.getBoundingClientRect();
+        return {
+            x: rect.left - containerRect.left + (rect.width / 2),
+            y: rect.top - containerRect.top + (rect.height / 2)
         };
     }
 
-    const lockBtn = document.getElementById('btn-lock-breaker');
+    // Redraws the lines that have been successfully matched
+    function renderConnections() {
+        svg.querySelectorAll('.perm-line').forEach(el => el.remove());
+        Object.keys(connections).forEach(color => {
+            const lNode = document.querySelector(`.left-node[data-color="${color}"]`);
+            const rNode = document.querySelector(`.right-node[data-color="${color}"]`);
+            if (lNode && rNode) {
+                const p1 = getCoords(lNode);
+                const p2 = getCoords(rNode);
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', p1.x);
+                line.setAttribute('y1', p1.y);
+                line.setAttribute('x2', p2.x);
+                line.setAttribute('y2', p2.y);
+                line.setAttribute('stroke', color);
+                line.setAttribute('stroke-width', '10');
+                line.setAttribute('stroke-linecap', 'round');
+                line.classList.add('perm-line');
+                svg.appendChild(line);
+            }
+        });
+    }
 
-    // Rapidly change colors for UNLOCKED boxes
-    minigameInterval = setInterval(() => {
-        for (let i = 0; i < numPairs; i++) {
-            if (!isLocked[i]) {
-                currentColors[i] = colors[Math.floor(Math.random() * colors.length)];
-                flickerElements[i].style.background = currentColors[i];
+    // Handles Tracing
+    window._wireMouseMove = (e) => {
+        if (!selectedColor) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const containerRect = document.getElementById('wires-container').getBoundingClientRect();
+        
+        activeLine.setAttribute('x2', clientX - containerRect.left);
+        activeLine.setAttribute('y2', clientY - containerRect.top);
+    };
+
+    // Handles Dropping
+    window._wireMouseUp = (e) => {
+        if (!selectedColor) return;
+        
+        const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+        const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+        
+        // Find what we dropped the wire on top of
+        const droppedElement = document.elementFromPoint(clientX, clientY);
+        
+        if (droppedElement && droppedElement.classList.contains('right-node')) {
+            if (droppedElement.dataset.color === selectedColor) {
+                // Correct Match!
+                connections[selectedColor] = true;
+                successSound.play();
+                renderConnections();
+            } else {
+                // Wrong Match!
+                failSound.currentTime = 0;
+                failSound.play();
             }
         }
-    }, 120);
-
-    lockBtn.onclick = () => {
-        // Check if ALL pairs are locked and match their targets
-        let allMatch = true;
-        let allLocked = true;
-
-        for (let i = 0; i < numPairs; i++) {
-            if (!isLocked[i]) allLocked = false;
-            if (currentColors[i] !== targetColors[i]) allMatch = false;
-        }
-
-        if (!allLocked) {
-            lockBtn.innerText = "LOCK ALL BOXES FIRST!";
+        
+        // Reset state
+        if (selectedNode) selectedNode.style.transform = 'scale(1)';
+        selectedColor = null;
+        selectedNode = null;
+        activeLine.style.display = 'none';
+        
+        // Check if all wires are connected
+        if (Object.keys(connections).length === numWires) {
+            wiresCount++;
             setTimeout(() => {
-                if (window.isTaskActive) lockBtn.innerText = "VERIFY CONNECTION";
-            }, 1000);
-            return;
-        }
-
-        if (allMatch) {
-            clearInterval(minigameInterval);
-            successSound.play();
-            breakerCount++;
-            window.cancelCurrentTask(); 
-            
-            if (breakerCount >= MAX_BREAKER) {
-                btnFixBreaker.style.color = "#00ff00";
-                btnFixBreaker.style.borderColor = "#00ff00";
-                btnFixBreaker.innerText = "Breaker Fixed";
-                btnFixBreaker.disabled = true;
-            }
-            checkWinCondition();
-        } else {
-            failSound.currentTime = 0;
-            failSound.play();
-            
-            // Reset state
-            lockBtn.innerText = "FAILED! REBOOTING...";
-            lockBtn.disabled = true;
-            
-            for (let i = 0; i < numPairs; i++) {
-                isLocked[i] = false;
-                flickerElements[i].classList.remove('locked');
-            }
-
-            setTimeout(() => {
-                if (window.isTaskActive) { 
-                    lockBtn.innerText = "VERIFY CONNECTION";
-                    lockBtn.disabled = false;
+                window.cancelCurrentTask(); 
+                if (wiresCount >= MAX_WIRES) {
+                    btnFixWires.style.color = "#00ff00";
+                    btnFixWires.style.borderColor = "#00ff00";
+                    btnFixWires.innerText = "Wires Connected";
+                    btnFixWires.disabled = true;
                 }
-            }, 1000);
+                checkWinCondition();
+            }, 600); // Slight delay so player sees the final connected line
         }
     };
+
+    // Attach dragging events to the document so it tracks smoothly
+    document.addEventListener('mousemove', window._wireMouseMove);
+    document.addEventListener('mouseup', window._wireMouseUp);
+    document.addEventListener('touchmove', window._wireMouseMove, {passive: false});
+    document.addEventListener('touchend', window._wireMouseUp);
+
+    // Initial click setup for the left nodes
+    document.querySelectorAll('.left-node').forEach(node => {
+        const startDrag = (e) => {
+            const color = node.dataset.color;
+            if (connections[color]) return; // Block dragging if already connected
+            
+            selectedColor = color;
+            selectedNode = node;
+            node.style.transform = 'scale(1.2)';
+            
+            const coords = getCoords(node);
+            activeLine.setAttribute('x1', coords.x);
+            activeLine.setAttribute('y1', coords.y);
+            activeLine.setAttribute('x2', coords.x);
+            activeLine.setAttribute('y2', coords.y);
+            activeLine.setAttribute('stroke', color);
+            activeLine.style.display = 'block';
+        };
+
+        // Supports both mouse and touchscreens
+        node.addEventListener('mousedown', startDrag);
+        node.addEventListener('touchstart', (e) => { 
+            e.preventDefault(); // Prevents screen scrolling while dragging
+            startDrag(e); 
+        }, {passive: false});
+    });
 }
 
 // --- End of Night Win Condition ---
 function checkWinCondition() {
-    if (lightsCount >= MAX_LIGHTS && breakerCount >= MAX_BREAKER) {
+    if (lightsCount >= MAX_LIGHTS && wiresCount >= MAX_WIRES) {
         triggerWin();
     }
 }
 
-// Confetti and triggerWin logic remains untouched
+// --- Confetti & Win Sequence ---
 function launchConfetti() {
     const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'];
     for (let i = 0; i < 150; i++) {
