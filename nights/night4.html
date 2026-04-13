@@ -475,10 +475,41 @@
     <script src="../night4-sys/tasksN4.js"></script>
     <script src="../Save-load_logic/saveSystem.js"></script>
     
-    <script src="../night4-sys/LeebronAIN4.js"></script>
+   <script src="../night4-sys/LeebronAIN4.js"></script>
     <script src="../night4-sys/BezoidAIN4.js"></script>
     <script src="../night4-sys/CenaAIN4.js"></script>
     <script src="../night4-sys/ZuckenBurgerN4.js"></script>
 
+    <script>
+        window.onload = function() {
+            console.log("[System] Night 4 initializing...");
+
+            // 1. Start Power Drain (Assuming powerN4.js has a start function)
+            if (typeof window.startPowerSystem === 'function') {
+                window.startPowerSystem();
+            }
+
+            // 2. Wake up the AIs!
+            setTimeout(() => {
+                console.log("[System] Unleashing the AIs...");
+                
+                if (typeof window.startCenaAI === 'function') {
+                    window.startCenaAI();
+                }
+                
+                if (typeof window.startLeebronAI === 'function') {
+                    window.startLeebronAI();
+                }
+                
+                if (typeof window.startBezoidAI === 'function') {
+                    window.startBezoidAI();
+                }
+                
+                if (typeof window.startZuckAI === 'function') {
+                    window.startZuckAI();
+                }
+            }, 3000); // Gives the cinematic slowFadeIn 3 seconds to finish before they start attacking
+        };
+    </script>
 </body>
 </html>
