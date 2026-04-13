@@ -132,6 +132,7 @@ if (btnCamera) {
 let ventProgress = 0;
 let fanSpeed = 0;
 let fanRotation = 0;
+let ventHoldFrames = 0; // NEW: Timer to prevent instant draining
 
 if (btnFixVents) {
     btnFixVents.innerText = `Fix Air Vents (${ventsCount}/${MAX_VENTS})`;
@@ -155,6 +156,7 @@ function startVentsMinigame() {
     ventProgress = 0;
     fanSpeed = 0;
     fanRotation = 0;
+    ventHoldFrames = 0;
 
     minigameOverlay.innerHTML = `
         <div class="minigame-box">
@@ -175,9 +177,14 @@ function startVentsMinigame() {
     function animateVents() {
         if (!window.isTaskActive || activeTaskType !== 'vents') return;
 
-        // Drain the progress bar constantly
-        ventProgress -= 0.6; 
-        if (ventProgress < 0) ventProgress = 0;
+        // NEW: Check if we are currently holding the max progress
+        if (ventHoldFrames > 0) {
+            ventHoldFrames--;
+        } else {
+            // Drain the progress bar constantly if not holding
+            ventProgress -= 0.6; 
+            if (ventProgress < 0) ventProgress = 0;
+        }
         
         fillEl.style.width = `${ventProgress}%`;
 
@@ -221,7 +228,10 @@ function startVentsMinigame() {
 
 function handleVentSpam() {
     ventProgress += 12; // Amount of progress per click
-    if (ventProgress > 100) ventProgress = 100;
+    if (ventProgress >= 100) {
+        ventProgress = 100;
+        ventHoldFrames = 60; // NEW: Hold at max for roughly 1 second (at 60fps)
+    }
 }
 
 
@@ -256,8 +266,8 @@ function startCalibrateMinigame() {
     // Scale Difficulty: First 2 completions = 2 boxes. Last 3 completions = 5 boxes.
     const numZones = calibrateCount < 2 ? 2 : 5;
     
-    // Base speed gets slightly faster each completion
-    cursorSpeed = 3.0 + (calibrateCount * 0.5);
+    // UPDATED: Much gentler speed scaling so it stays beatable
+    cursorSpeed = 2.0 + (calibrateCount * 0.25);
     cursorX = 0;
     cursorDir = 1;
     currentZoneIndex = 0;
