@@ -58,7 +58,7 @@
 </head>
 <body>
 
-    <button id="start-btn">BEGIN SECTOR OVERRIDE</button>
+    <button id="start-btn">[Click here to advance to Night4]</button>
     <div id="intro-text"></div>
 
     <script>
@@ -121,6 +121,9 @@
                     boomTrack.currentTime = 0;
                     boomTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
 
+                    // REMOVE the fade transition for a hard pop
+                    introText.style.transition = 'none';
+
                     // Show "NIGHT 4" exactly as the Boom hits
                     introText.innerText = step.text;
                     introText.classList.add('night-title');
@@ -128,10 +131,10 @@
 
                     // Wait 5 seconds on the title screen, then load Night 4
                     setTimeout(() => {
-                        introText.style.opacity = '0'; 
+                        introText.style.opacity = '0'; // This will also hard cut to black, adding to the intimidation
                         setTimeout(() => {
                             window.location.href = 'night4.html';
-                        }, 1500);
+                        }, 500); // Shorter wait since it doesn't need to fade
                     }, 5000);
 
                 }, 2600); 
