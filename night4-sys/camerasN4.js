@@ -143,7 +143,30 @@ function switchCamera(roomName, playAudio = true) {
     // --- NIGHT 4 AI SPRITE LOGIC ---
     
     if (leebronSprite) {
-        leebronSprite.style.display = (window.aiPositions && window.aiPositions.leebron === roomName) ? 'block' : 'none';
+        if (window.aiPositions && window.aiPositions.leebron === roomName) {
+            leebronSprite.style.display = 'block';
+            
+            // Dynamic Room Positioning for Leebron
+            if (roomName === 'Guest Room') {
+                leebronSprite.style.left = '40%';
+                leebronSprite.style.bottom = '100px';
+                leebronSprite.style.transform = 'scale(0.85)';
+                leebronSprite.style.filter = 'brightness(0.5)'; // Extra dark since he spawns in the dark!
+            } else if (roomName === 'Diner') {
+                leebronSprite.style.left = '25%';
+                leebronSprite.style.bottom = '60px';
+                leebronSprite.style.transform = 'scale(1.1)';
+                leebronSprite.style.filter = 'brightness(0.8)';
+            } else {
+                // Default fallback
+                leebronSprite.style.left = '20%';
+                leebronSprite.style.bottom = '50px';
+                leebronSprite.style.transform = 'scale(1)';
+                leebronSprite.style.filter = 'brightness(1)';
+            }
+        } else {
+            leebronSprite.style.display = 'none';
+        }
     }
 
     if (bezoidSprite) {
@@ -158,7 +181,7 @@ function switchCamera(roomName, playAudio = true) {
         if (window.aiPositions && window.aiPositions.cena === roomName) {
             cenaSprite.style.display = 'block';
             
-            // --- NEW: Dynamic Room Positioning for Cena ---
+            // Dynamic Room Positioning for Cena
             if (roomName === 'Kitchen') {
                 cenaSprite.style.left = '35%';
                 cenaSprite.style.bottom = '80px';
