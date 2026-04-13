@@ -26,14 +26,14 @@ if (!zuckOfficeSprite) {
 let zuckTimer = null;
 let zuckActive = false;
 let zuckLightSyncInterval = null;
+let darknessCounter = 0; // NEW: Tracks how long the player has been hiding!
 
 window.aiPositions = window.aiPositions || {};
 
-// 1. Randomizes the next attack between 12s and 20s (Night 4 is slightly faster!)
+// 1. Randomizes the next attack between 12s and 20s
 function scheduleZuckAttack() {
     if (typeof window.isBlackout !== 'undefined' && window.isBlackout) return;
 
-    // Math.random() * 8000 gives 0-7.9k. Adding 12000 gives exactly 12s to 19.9s
     const nextAttackTime = Math.floor(Math.random() * 8000) + 12000; 
     console.log(`[ZuckenBurger AI] Next attack in ${nextAttackTime / 1000} seconds.`);
 
@@ -48,7 +48,8 @@ function enterOffice() {
 
     console.log("[ZuckenBurger AI] ZuckenBurger has entered the office! TURN OFF THE LIGHTS!");
     zuckActive = true;
-    window.aiPositions.zuck = 'Office'; // Matches camerasN4.js!
+    darknessCounter = 0; // Reset the darkness tracking
+    window.aiPositions.zuck = 'Office'; 
     
     // Update Cameras if looking at Janitor Room
     if (typeof window.refreshCameraUI === 'function') window.refreshCameraUI();
@@ -65,25 +66,15 @@ function enterOffice() {
     // Display the office sprite
     zuckOfficeSprite.style.display = 'block';
 
-    // Player has exactly 5.5 seconds to react on Night 4
+    // Player has exactly 5.5 seconds to react
     zuckTimer = setTimeout(() => {
-        checkZuckSurvival();
+        // If this timer goes off, the player didn't hide in time!
+        console.log("[ZuckenBurger AI] The lights were on too long. Jumpscare triggered!");
+        triggerZuckJumpscare();
     }, 5500);
 }
 
-// 3. Evaluate if the player turned off the lights in time
-function checkZuckSurvival() {
-    // If the power went out or lights are off, the player is safe
-    if (window.isLightOff || (typeof window.isBlackout !== 'undefined' && window.isBlackout)) {
-        console.log("[ZuckenBurger AI] The room is dark. ZuckenBurger leaves.");
-        leaveOffice();
-    } else {
-        console.log("[ZuckenBurger AI] The lights were on. Jumpscare triggered!");
-        triggerZuckJumpscare();
-    }
-}
-
-// 4. ZuckenBurger resets to the Janitor Room
+// 3. ZuckenBurger resets to the Janitor Room
 function leaveOffice() {
     zuckActive = false;
     zuckOfficeSprite.style.display = 'none';
@@ -98,7 +89,7 @@ function leaveOffice() {
     scheduleZuckAttack();
 }
 
-// 5. The game over sequence
+// 4. The game over sequence
 function triggerZuckJumpscare() {
     window.stopZuckAI();
 
@@ -141,25 +132,38 @@ window.startZuckAI = function() {
 
     window.aiPositions.zuck = 'Janitor Room';
     zuckActive = false;
+    darknessCounter = 0;
 
     console.log("[ZuckenBurger AI] Online. First attack in 30 seconds...");
     
-    // Initial Grace Period for Night 4 (30 seconds)
+    // Initial Grace Period
     zuckTimer = setTimeout(() => {
         enterOffice(); 
     }, 30000); 
 
-    // REAL-TIME LIGHTING SYNC (Makes him dark with the room)
+    // REAL-TIME LIGHTING SYNC & SURVIVAL CHECK
     zuckLightSyncInterval = setInterval(() => {
         if (zuckActive && zuckOfficeSprite.style.display === 'block') {
-            // Prevent him from dimming if he is currently in the middle of his jumpscare zoom
+            
+            // Prevent him from evaluating logic if he is currently jumping at you
             if (zuckOfficeSprite.style.transform.includes('scale(8)')) return;
 
             if (window.isLightOff || (typeof window.isBlackout !== 'undefined' && window.isBlackout)) {
+                // Dim sprite to match darkness
                 zuckOfficeSprite.style.opacity = '0.2';
                 zuckOfficeSprite.style.filter = 'brightness(0)';
                 zuckOfficeSprite.style.transition = 'opacity 0.2s ease, filter 0.2s ease';
+                
+                // --- NEW: Actively track how long they are hiding ---
+                darknessCounter += 100; // Interval runs every 100ms
+                if (darknessCounter >= 1500) { // 1.5 seconds of darkness
+                    console.log("[ZuckenBurger AI] The room stayed dark. ZuckenBurger leaves early!");
+                    clearTimeout(zuckTimer); // Cancel the 5.5s jumpscare timer
+                    leaveOffice();
+                }
             } else {
+                // Lights are ON! Reset the hiding counter
+                darknessCounter = 0;
                 zuckOfficeSprite.style.opacity = '1';
                 zuckOfficeSprite.style.filter = 'brightness(1)';
             }
