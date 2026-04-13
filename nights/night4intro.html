@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night 4 - Override</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        #intro-text {
+            font-size: 2rem;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        
+        #start-btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background: transparent;
+            color: #aaa;
+            border: 2px solid #555;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: 0.3s;
+            position: absolute;
+        }
+        
+        #start-btn:hover {
+            border-color: #fff;
+            color: #fff;
+            background: #111;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .night-title {
+            font-size: 6rem !important;
+            font-weight: bold;
+            color: #ff4444; /* Dark, bloody red for the final reveal */
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <button id="start-btn">[Click here to continue]</button>
+    <div id="intro-text"></div>
+
+    <script>
+        const startBtn = document.getElementById('start-btn');
+        const introText = document.getElementById('intro-text');
+        
+        // Add your heaviest, most menacing sound effect here!
+        const ominousSound = new Audio('../Sounds/heavy-impact-or-drone.mp3'); 
+
+        // The sequence array lets us easily control what the text says and how long it stays on screen (in milliseconds)
+        const sequence = [
+            { text: "Something got in.", duration: 3500 },
+            { text: "3 things got in.", duration: 3500 },
+            { text: "2 left, but 3 came.", duration: 4000, playSound: true },
+            { text: "Darkness fuels him, make sure to keep the lights on.", duration: 4500 },
+            { text: "It is here as well, he will blind you from your tools, you must be wary.", duration: 5000 },
+            { text: "You can't hide from him, you must use your tools precisely.", duration: 5000 },
+            { text: "NIGHT 4", duration: 5000, isTitle: true }
+        ];
+
+        // Start the sequence when the player clicks the button
+        startBtn.addEventListener('click', () => {
+            startBtn.style.opacity = '0';
+            setTimeout(() => {
+                startBtn.style.display = 'none';
+                runIntroSequence(0);
+            }, 500); // Wait for button to fade out
+        });
+
+        function runIntroSequence(index) {
+            // If we've reached the end of the text, move to the actual game
+            if (index >= sequence.length) {
+                window.location.href = 'night4.html';
+                return;
+            }
+
+            const step = sequence[index];
+
+            // Trigger the audio if this step calls for it
+            if (step.playSound) {
+                ominousSound.currentTime = 0;
+                ominousSound.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
+            }
+
+            // Apply special styling if it's the final "NIGHT 4" title
+            if (step.isTitle) {
+                introText.classList.add('night-title');
+            } else {
+                introText.classList.remove('night-title');
+            }
+
+            // Show the text
+            introText.innerText = step.text;
+            introText.style.opacity = '1';
+
+            // Calculate when to start fading out (1.5 seconds before the duration ends)
+            const fadeOutTime = step.duration - 1500;
+
+            setTimeout(() => {
+                introText.style.opacity = '0'; // Start fading out
+                
+                // Wait 1.5 seconds for the fade out to completely finish, then load the next line
+                setTimeout(() => {
+                    runIntroSequence(index + 1);
+                }, 1500); 
+
+            }, fadeOutTime);
+        }
+    </script>
+</body>
+</html>
