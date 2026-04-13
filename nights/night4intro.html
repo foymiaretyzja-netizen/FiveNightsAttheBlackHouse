@@ -1,4 +1,67 @@
-<script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night 4 - Override</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            text-align: center;
+        }
+        
+        #intro-text {
+            font-size: 2rem;
+            opacity: 0;
+            transition: opacity 1.5s ease-in-out;
+            max-width: 80%;
+            line-height: 1.5;
+        }
+        
+        #start-btn {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            background: transparent;
+            color: #aaa;
+            border: 2px solid #555;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            transition: 0.3s;
+            position: absolute;
+            z-index: 10;
+        }
+        
+        #start-btn:hover {
+            border-color: #fff;
+            color: #fff;
+            background: #111;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
+        }
+        
+        .night-title {
+            font-size: 6rem !important;
+            font-weight: bold;
+            color: #ff4444; /* Dark, bloody red for the final reveal */
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+
+    <button id="start-btn">BEGIN SECTOR OVERRIDE</button>
+    <div id="intro-text"></div>
+
+    <script>
         const startBtn = document.getElementById('start-btn');
         const introText = document.getElementById('intro-text');
         
@@ -52,7 +115,7 @@
                 setTimeout(() => {
                     boomTrack.currentTime = 0;
                     boomTrack.play().catch(e => console.warn("[Audio] Blocked by browser:", e));
-                }, 15600); // 13000 + 2600
+                }, 15600); 
             }
 
             // Apply special styling if it's the final "NIGHT 4" title
@@ -80,3 +143,5 @@
             }, fadeOutTime);
         }
     </script>
+</body>
+</html>
