@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Night 4 - Five Nights at the Black House</title>
+    <style>
+        /* CSS Reset & Setup */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background-color: #000; 
+            color: #fff; 
+            font-family: 'Courier New', Courier, monospace; 
+            overflow: hidden; 
+            user-select: none; 
+        }
+
+        /* --- Cinematic Fade In --- */
+        #night-fade-in {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            z-index: 9999;
+            pointer-events: none;
+            animation: slowFadeIn 3s ease-in forwards;
+        }
+
+        @keyframes slowFadeIn {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
+        /* --- NEW: Power Shock Flash Overlay --- */
+        #flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            z-index: 9998;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.1s;
+        }
+
+        /* --- 1. The Panning Office Background --- */
+        #office-panorama {
+            position: absolute;
+            top: 0; left: 0;
+            width: 150vw; 
+            height: 100vh;
+            background-image: url('../Scenes/Presidential-room.jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            transition: transform 0.1s ease-out; 
+        }
+
+        /* --- 2. Hover Task Tabs --- */
+        .task-panel {
+            position: absolute;
+            bottom: 0;
+            width: 350px;
+            height: 340px; /* Slightly taller for new buttons */
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #444;
+            border-bottom: none;
+            border-radius: 15px 15px 0 0;
+            padding: 20px;
+            z-index: 30; 
+            transform: translateY(150%); 
+            transition: transform 0.3s ease 0s; 
+        }
+
+        .tab-label {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #ccc;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            pointer-events: none;
+        }
+
+        #left-panel { left: 8vw; }
+        #right-panel { right: 8vw; }
+
+        .task-panel.is-visible { transform: translateY(85%); }
+        .task-panel.is-visible:hover {
+            transform: translateY(0);
+            transition: transform 0.3s ease 0.5s; 
+        }
+
+        /* --- System Buttons CSS --- */
+        .sys-btn {
+            background: #222;
+            color: #ccc;
+            border: 2px solid #555;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            text-align: center;
+        }
+        .sys-btn:hover {
+            background: #444;
+            color: #fff;
+            border-color: #fff;
+        }
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        #btn-shock {
+            background-color: #330000;
+        }
+        #btn-shock:hover {
+            background-color: #aa0000;
+            box-shadow: 0 0 10px red;
+        }
+
+        /* --- 3. Invisible Door Hitboxes --- */
+        .door-zone {
+            position: absolute;
+            top: 0;
+            width: 15vw; 
+            height: 100vh;
+            z-index: 20;
+            cursor: pointer;
+        }
+
+        #left-door-zone { left: 0; }
+        #right-door-zone { right: 0; }
+
+        /* --- 4. Dynamic Door Shadows --- */
+        .door-shadow {
+            position: absolute;
+            top: 0; 
+            width: 25vw; 
+            height: 100vh;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #left-shadow {
+            left: 0;
+            background: linear-gradient(to right, rgba(0,0,0,0.95) 10%, transparent);
+        }
+
+        #right-shadow {
+            right: 0;
+            background: linear-gradient(to left, rgba(0,0,0,0.95) 10%, transparent);
+        }
+
+        /* --- 5. Camera Button & Monitor Overlay --- */
+        #camera-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 400px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 60; 
+            transition: background 0.2s, border 0.2s;
+        }
+
+        #camera-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid #fff;
+        }
+
+        #camera-btn::after {
+            content: "v";
+            display: block;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #aaa;
+            line-height: 40px;
+            font-family: sans-serif;
+            transform: scaleY(0.5); 
+        }
+
+        #camera-monitor {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: #111; 
+            z-index: 50;
+            transform: translateY(100%); 
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- 6. Camera System Layout --- */
+        #camera-layout {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            padding: 40px;
+            gap: 30px;
+        }
+
+        #camera-map-img {
+            width: 100%;
+            height: auto;
+            border: 2px solid #555;
+            margin-bottom: 10px;
+            filter: brightness(0.8) contrast(1.2);
+        }
+
+        #camera-nav {
+            flex: 0 0 280px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 10px;
+            overflow-y: auto;
+        }
+
+        .cam-btn {
+            background: #222;
+            color: #ccc;
+            border: 2px solid #555;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: left;
+            transition: 0.2s;
+        }
+
+        .cam-btn:hover, .cam-btn.active {
+            background: #555;
+            border-color: #fff;
+            color: #fff;
+        }
+
+        #camera-screen {
+            flex: 1;
+            position: relative;
+            border: 4px solid #333;
+            background: #000;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        #camera-feed {
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+        }
+
+        #crt-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #static-flash {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @keyframes flashEffect {
+            0% { opacity: 0.9; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            100% { opacity: 0; }
+        }
+        .is-switching { animation: flashEffect 0.3s ease-out; }
+
+        @keyframes longFlashEffect {
+            0% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            80% { opacity: 0.95; background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQIW2NkYGD4z8DAwMgAI0AMCKcCBXY/C6MAAAAASUVORK5CYII=') repeat; }
+            100% { opacity: 0; }
+        }
+        .is-long-switching { animation: longFlashEffect 5s ease-out forwards; }
+
+        /* Sprite styling for Camera and Office */
+        .ai-sprite {
+            position: absolute;
+            z-index: 5;
+            display: none; 
+        }
+
+        /* Camera Sprites */
+        #camera-screen .ai-sprite { bottom: 50px; height: 60%; }
+        #leebron-sprite { left: 20%; }
+        #bezoid-sprite { right: 20%; }
+        #cena-sprite { left: 80%; }
+        #zuck-sprite { left: 50%; transform: translateX(-50%); }
+
+        /* Office/Jumpscare Sprites */
+        #leebron-sprite-office, #bezoid-sprite-office, #cena-sprite-office, #zuck-sprite-office {
+            height: 70%;
+            bottom: 10%;
+            z-index: 100;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="flash-overlay"></div>
+    <div id="night-fade-in"></div>
+
+    <div id="office-panorama"></div>
+    
+    <div id="power-display" style="position: absolute; top: 20px; left: 20px; z-index: 100; font-size: 1.5rem; font-weight: bold; color: #fff; text-shadow: 2px 2px 0 #000;">
+        Power: 100%
+    </div>
+
+    <div id="left-panel" class="task-panel">
+        <div class="tab-label">MAINTENANCE</div>
+        <h2 style="color: #ffaa00; margin-bottom: 15px; font-size: 1.3rem;">System Repairs</h2>
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <button id="btn-deport" class="sys-btn">Repair Lights (0/5)</button>
+            <button id="btn-missile" class="sys-btn">Fix Breaker (0/1)</button>
+        </div>
+    </div>
+
+    <div id="right-panel" class="task-panel">
+        <div class="tab-label">SYS-PWR</div>
+        <h2 style="color: #00ff00; margin-bottom: 10px; font-size: 1.3rem;">Power & Sensors</h2>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <button id="btn-lights" class="sys-btn" style="border-color: #ffbb00; color: #ffbb00;">Turn Off Lights</button>
+            
+            <hr style="border: 1px solid #333; margin: 5px 0;">
+            
+            <div style="color: #00ff00; font-size: 0.9rem; text-align: center;">MOTION SENSOR</div>
+            <div class="btn-row">
+                <button id="btn-sensor-left" class="sys-btn">Scan Left Door</button>
+                <button id="btn-sensor-right" class="sys-btn">Scan Right Door</button>
+            </div>
+            
+            <button id="btn-shock" class="sys-btn" style="border-color: #ff0000; color: #ff0000; margin-top: 5px;">INITIATE POWER SHOCK</button>
+            
+            <div id="sensor-display" style="color: #aaa; font-size: 0.8rem; text-align: center; margin-top: 5px;">Awaiting Scan...</div>
+        </div>
+    </div>
+
+    <div id="left-shadow" class="door-shadow"></div>
+    <div id="right-shadow" class="door-shadow"></div>
+    <div id="left-door-zone" class="door-zone" onclick="toggleDoor('left')"></div>
+    <div id="right-door-zone" class="door-zone" onclick="toggleDoor('right')"></div>
+
+    <div id="camera-btn" onclick="toggleCamera()"></div>
+
+    <div id="camera-monitor">
+        <div id="camera-layout">
+            <div id="camera-nav">
+                <img id="camera-map-img" src="../StoryScenes/Screenshot 2026-04-10 9.12.19 PM.png" alt="Office Map">
+            </div>
+            
+            <div id="camera-screen">
+                <div id="camera-feed"></div>
+                <img id="leebron-sprite" class="ai-sprite" src="../night4-sys/sprites/Leebron.png" alt="Leebron">
+                <img id="bezoid-sprite" class="ai-sprite" src="../night4-sys/sprites/Bezoid.png" alt="Bezoid">
+                <img id="cena-sprite" class="ai-sprite" src="../night4-sys/sprites/Cena.png" alt="Cena">
+                <img id="zuck-sprite" class="ai-sprite" src="../night4-sys/sprites/ZuckenBurger.png" alt="ZuckenBurger">
+                
+                <div id="crt-overlay"></div>
+                <div id="static-flash"></div>
+            </div>
+        </div>
+    </div>
+
+    <img id="leebron-sprite-office" class="ai-sprite" src="../night4-sys/sprites/Leebron.png">
+    <img id="bezoid-sprite-office" class="ai-sprite" src="../night4-sys/sprites/Bezoid.png">
+    <img id="cena-sprite-office" class="ai-sprite" src="../night4-sys/sprites/Cena.png">
+    <img id="zuck-sprite-office" class="ai-sprite" src="../night4-sys/sprites/ZuckenBurger.png">
+
+    <script>
+        const panorama = document.getElementById('office-panorama');
+        const leftShadow = document.getElementById('left-shadow');
+        const rightShadow = document.getElementById('right-shadow');
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+        
+        const maxPan = window.innerWidth * 0.5; 
+        
+        // Globals for AI and Cameras
+        window.leftDoorClosed = false;
+        window.rightDoorClosed = false;
+        window.isCameraOpen = false;
+        
+        // Setup positions for the Night 4 roster
+        window.aiPositions = { leebron: 'Guest Room', bezoid: 'Storage', cena: 'Unknown', zuck: 'Janitor Room' };
+
+        // Panning Logic
+        document.addEventListener('mousemove', (e) => {
+            if (window.isCameraOpen || window.isTaskActive) return; 
+
+            const mouseX = e.clientX;
+            const screenWidth = window.innerWidth;
+            const percentage = mouseX / screenWidth; 
+            
+            const panAmount = -(percentage * maxPan);
+            panorama.style.transform = `translateX(${panAmount}px)`;
+
+            // Left Panel (Tasks) Logic
+            if (percentage < 0.35) {
+                leftPanel.classList.add('is-visible');
+            } else {
+                leftPanel.classList.remove('is-visible');
+                if (window.isTaskActive && window.cancelCurrentTask) {
+                    window.cancelCurrentTask();
+                }
+            }
+
+            // Right Panel (System) Logic
+            if (percentage > 0.65) rightPanel.classList.add('is-visible');
+            else rightPanel.classList.remove('is-visible');
+
+            if (window.leftDoorClosed) leftShadow.style.opacity = Math.max(0, 1 - (percentage / 0.3)); 
+            if (window.rightDoorClosed) rightShadow.style.opacity = Math.max(0, (percentage - 0.7) / 0.3);
+        });
+
+        // Door Audio
+        const openSounds = [
+            new Audio('../Sounds/dragon-studio-open-door-stock-sfx-454246.mp3'),
+            new Audio('../Sounds/soundreality-opening-door-411632.mp3')
+        ];
+        const closeSounds = [
+            new Audio('../Sounds/dragon-studio-door-close-effect-382710.mp3'),
+            new Audio('../Sounds/freesound_community-door-close-79921.mp3')
+        ];
+
+        function playRandomSound(soundArray) {
+            const sound = soundArray[Math.floor(Math.random() * soundArray.length)];
+            sound.currentTime = 0; 
+            sound.play().catch(e => console.log("Audio block:", e));
+        }
+
+        window.toggleDoor = function(side) {
+            if (window.isCameraOpen) return; 
+
+            if (side === 'left') {
+                window.leftDoorClosed = !window.leftDoorClosed;
+                playRandomSound(window.leftDoorClosed ? closeSounds : openSounds);
+                if (!window.leftDoorClosed) leftShadow.style.opacity = 0;
+            } else if (side === 'right') {
+                window.rightDoorClosed = !window.rightDoorClosed;
+                playRandomSound(window.rightDoorClosed ? closeSounds : openSounds);
+                if (!window.rightDoorClosed) rightShadow.style.opacity = 0;
+            }
+        };
+    </script>
+
+    <script src="../night4-sys/powerN4.js"></script>
+    <script src="../night4-sys/camerasN4.js"></script>
+    <script src="../night4-sys/tasksN4.js"></script>
+    <script src="../Save-load_logic/saveSystem.js"></script>
+    
+    <script src="../night4-sys/LeebronAIN4.js"></script>
+    <script src="../night4-sys/BezoidAIN4.js"></script>
+    <script src="../night4-sys/CenaAIN4.js"></script>
+    <script src="../night4-sys/ZuckenBurgerN4.js"></script>
+
+</body>
+</html>
