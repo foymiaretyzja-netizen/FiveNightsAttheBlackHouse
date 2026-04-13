@@ -4,7 +4,7 @@ const cameraNav = document.getElementById('camera-nav');
 const cameraFeed = document.getElementById('camera-feed');
 const cameraScreen = document.getElementById('camera-screen');
 
-// NEW: Night 4 Sprite References
+// Night 4 Sprite References
 const leebronSprite = document.getElementById('leebron-sprite');
 const bezoidSprite = document.getElementById('bezoid-sprite');
 const cenaSprite = document.getElementById('cena-sprite');
@@ -22,7 +22,7 @@ const camSounds = [
 
 let currentCamAudio = null;
 
-// The static rooms (Guest Room is static again since Charrlie is gone)
+// The static rooms
 const rooms = {
     'Conference Room': '../Scenes/Conference room.jpg',
     'Diner': '../Scenes/Diner.jpg',
@@ -150,13 +150,35 @@ function switchCamera(roomName, playAudio = true) {
         bezoidSprite.style.display = (window.aiPositions && window.aiPositions.bezoid === roomName) ? 'block' : 'none';
     }
 
-    if (cenaSprite) {
-        // You can't see him... unless he's on this camera.
-        cenaSprite.style.display = (window.aiPositions && window.aiPositions.cena === roomName) ? 'block' : 'none';
-    }
-
     if (zuckSprite) {
         zuckSprite.style.display = (window.aiPositions && window.aiPositions.zuck === roomName) ? 'block' : 'none';
+    }
+
+    if (cenaSprite) {
+        if (window.aiPositions && window.aiPositions.cena === roomName) {
+            cenaSprite.style.display = 'block';
+            
+            // --- NEW: Dynamic Room Positioning for Cena ---
+            if (roomName === 'Kitchen') {
+                cenaSprite.style.left = '35%';
+                cenaSprite.style.bottom = '80px';
+                cenaSprite.style.transform = 'scale(0.8)';
+                cenaSprite.style.filter = 'brightness(0.7)'; // Dimmer for the kitchen
+            } else if (roomName === 'Diner') {
+                cenaSprite.style.left = '60%';
+                cenaSprite.style.bottom = '50px';
+                cenaSprite.style.transform = 'scale(0.9)';
+                cenaSprite.style.filter = 'brightness(0.8)';
+            } else {
+                // Default position for Storage, Janitor, Conference
+                cenaSprite.style.left = '80%';
+                cenaSprite.style.bottom = '50px';
+                cenaSprite.style.transform = 'scale(1)';
+                cenaSprite.style.filter = 'brightness(1)';
+            }
+        } else {
+            cenaSprite.style.display = 'none';
+        }
     }
 }
 
