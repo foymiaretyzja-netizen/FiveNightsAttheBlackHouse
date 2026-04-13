@@ -213,6 +213,15 @@ window.refreshCameraUI = function() {
 };
 
 window.toggleCamera = function() {
+    // --- NEW: Sabotage Lockout Mechanic ---
+    if (window.systemCompromised) {
+        console.log("[Cameras] Offline! System Compromised by Bezoid.");
+        // If you want a little static buzz when they try to click it while broken, uncomment the next line:
+        // new Audio('../Sounds/freesound_community-electricity-101990.mp3').play();
+        return; 
+    }
+    // --------------------------------------
+
     window.isCameraOpen = !window.isCameraOpen;
     
     if (window.isCameraOpen) {
