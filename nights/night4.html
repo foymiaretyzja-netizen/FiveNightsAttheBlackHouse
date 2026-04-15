@@ -11,8 +11,8 @@
             background-color: #000;
             color: #fff;
             font-family: 'Courier New', Courier, monospace;
-            overflow: hidden; /* No scrolling */
-            user-select: none; /* Prevents ugly blue text highlighting when spam clicking */
+            overflow: hidden;
+            user-select: none;
         }
 
         #game-container {
@@ -32,15 +32,8 @@
             z-index: 1;
         }
 
-        /* The powered room sits on top of the dark room */
-        #office-powered {
-            z-index: 2;
-            transition: opacity 0.5s linear; /* Smooth fade as power drains */
-        }
-
         #vent-view {
-            z-index: 3;
-            display: none; /* Hidden until a vent is clicked */
+            display: none; /* Hidden by default */
         }
 
         /* --- UI Overlay --- */
@@ -51,15 +44,26 @@
             width: 100%;
             height: 100%;
             z-index: 10;
-            pointer-events: none; /* Lets clicks pass through to underneath elements if needed */
+            pointer-events: none; /* Allows clicks to pass through except on interactive elements */
         }
 
-        /* Make interactive UI elements clickable */
         .interactive {
             pointer-events: auto;
         }
 
-        /* --- Vent Buttons (Vertical Text) --- */
+        /* --- Invisible Door Hitbox --- */
+        #door-hitbox {
+            position: absolute;
+            top: 20%;      /* Starts 20% down from the top */
+            left: 35%;     /* Starts 35% from the left */
+            width: 30%;    /* Covers the middle 30% of the screen horizontally */
+            height: 60%;   /* Covers 60% of the screen vertically */
+            cursor: pointer;
+            /* Uncomment the line below if you want to see a red box to test its placement */
+            /* border: 2px solid red; */
+        }
+
+        /* --- Vent Buttons --- */
         .vent-btn {
             position: absolute;
             top: 50%;
@@ -73,77 +77,16 @@
             writing-mode: vertical-rl;
             text-orientation: upright;
             letter-spacing: 5px;
-            transition: background 0.2s, transform 0.2s;
         }
 
         .vent-btn:hover {
             background: rgba(100, 100, 100, 0.9);
         }
 
-        .vent-btn.left {
-            left: 20px;
-        }
+        .vent-btn.left { left: 20px; }
+        .vent-btn.right { right: 20px; }
 
-        .vent-btn.right {
-            right: 20px;
-        }
-
-        /* --- Center Door Button --- */
-        #btn-door {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 15px 30px;
-            font-size: 1.2rem;
-            background: #222;
-            color: #fff;
-            border: 2px solid #555;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-
-        #btn-door:hover { background: #444; }
-
-        /* --- Generator UI --- */
-        #generator-container {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-        }
-
-        #power-bar {
-            width: 300px;
-            height: 20px;
-            background: #111;
-            border: 2px solid #fff;
-            margin-bottom: 10px;
-            position: relative;
-        }
-
-        #power-fill {
-            width: 100%;
-            height: 100%;
-            background: #00ff00;
-            /* Removed width transition here so the JS loop doesn't stutter */
-            transition: background 0.2s linear; 
-        }
-
-        #btn-crank {
-            padding: 10px 20px;
-            font-size: 1.2rem;
-            background: #aa8800;
-            color: #fff;
-            border: 2px solid #fff;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        #btn-crank:active { background: #ffcc00; }
-
-        /* --- Back Button (Inside Vent) --- */
+        /* --- Return Button --- */
         #btn-return {
             position: absolute;
             bottom: 50px;
@@ -155,7 +98,7 @@
             color: #fff;
             border: 2px solid #fff;
             cursor: pointer;
-            display: none;
+            display: none; /* Hidden by default */
         }
 
         #btn-return:hover { background: #ff0000; }
@@ -178,21 +121,15 @@
 <body>
 
     <div id="game-container">
-        <img id="office-dark" class="room-img" src="./night4-sys/office/officedark-opened.jpg" alt="Dark Office">
-        <img id="office-powered" class="room-img" src="./night4-sys/office/officepowered-opened.jpg" alt="Powered Office">
+        <img id="office-view" class="room-img" src="night4-sys/office/officepowered-opened.jpg" alt="Office">
         
-        <img id="vent-view" class="room-img" src="./night4-sys/office/left-vent.jpg" alt="Vent View">
+        <img id="vent-view" class="room-img" src="night4-sys/office/left-vent.jpg" alt="Vent">
 
         <div id="ui-layer">
+            <div id="door-hitbox" class="interactive"></div>
+
             <div id="btn-vent-left" class="vent-btn left interactive">VENTS</div>
             <div id="btn-vent-right" class="vent-btn right interactive">VENTS</div>
-
-            <button id="btn-door" class="interactive">CLOSE VAULT DOOR</button>
-
-            <div id="generator-container" class="interactive">
-                <div id="power-bar"><div id="power-fill"></div></div>
-                <button id="btn-crank">CRANK GENERATOR</button>
-            </div>
 
             <button id="btn-return" class="interactive">RETURN TO OFFICE</button>
         </div>
@@ -202,100 +139,52 @@
 
     <script>
         // --- State Variables ---
-        let powerLevel = 100;
         let isDoorClosed = false;
-        let isLookingInVent = false;
 
         // --- DOM Elements ---
-        const darkOffice = document.getElementById('office-dark');
-        const poweredOffice = document.getElementById('office-powered');
+        const officeView = document.getElementById('office-view');
         const ventView = document.getElementById('vent-view');
         
-        const btnDoor = document.getElementById('btn-door');
-        const btnCrank = document.getElementById('btn-crank');
-        const powerFill = document.getElementById('power-fill');
-        const fadeOverlay = document.getElementById('fade-overlay');
-        
+        const doorHitbox = document.getElementById('door-hitbox');
         const btnVentLeft = document.getElementById('btn-vent-left');
         const btnVentRight = document.getElementById('btn-vent-right');
         const btnReturn = document.getElementById('btn-return');
-        const generatorUI = document.getElementById('generator-container');
+        const fadeOverlay = document.getElementById('fade-overlay');
 
-        // --- 1. Generator & Opacity Logic ---
-        function updatePower() {
-            // Only drain power if you are NOT looking in the vents
-            if (!isLookingInVent) {
-                powerLevel -= 0.15; // Drain speed
-                if (powerLevel < 0) powerLevel = 0;
-
-                // Update UI Bar Width and Colors
-                powerFill.style.width = `${powerLevel}%`;
-                if (powerLevel < 30) {
-                    powerFill.style.background = "#ff0000";
-                } else if (powerLevel < 60) {
-                    powerFill.style.background = "#ffaa00";
-                } else {
-                    powerFill.style.background = "#00ff00";
-                }
-
-                // --- THE OPACITY TRICK ---
-                poweredOffice.style.opacity = powerLevel / 100;
-            }
-
-            // Always loop the function, even if we skipped the math above
-            requestAnimationFrame(updatePower);
-        }
-        
-        // Start the loop
-        requestAnimationFrame(updatePower);
-
-        // Crank Button Action
-        btnCrank.addEventListener('mousedown', () => {
-            powerLevel += 15;
-            if (powerLevel > 100) powerLevel = 100;
-        });
-
-        // --- 2. Front Door Logic ---
-        btnDoor.addEventListener('click', () => {
+        // --- 1. Invisible Door Toggle ---
+        doorHitbox.addEventListener('click', () => {
             isDoorClosed = !isDoorClosed;
             
             if (isDoorClosed) {
-                btnDoor.innerText = "OPEN VAULT DOOR";
-                darkOffice.src = "./night4-sys/office/officedark-closed.jpg";
-                poweredOffice.src = "./night4-sys/office/officepowered-closed.jpg";
+                officeView.src = "night4-sys/office/officepowered-closed.jpg";
             } else {
-                btnDoor.innerText = "CLOSE VAULT DOOR";
-                darkOffice.src = "./night4-sys/office/officedark-opened.jpg";
-                poweredOffice.src = "./night4-sys/office/officepowered-opened.jpg";
+                officeView.src = "night4-sys/office/officepowered-opened.jpg";
             }
         });
 
-        // --- 3. Vent Navigation Logic ---
+        // --- 2. Vent Navigation Logic ---
         function transitionToVent(side) {
-            isLookingInVent = true;
             fadeOverlay.style.opacity = '1'; // Fade to black
 
             setTimeout(() => {
                 // Hide Office Elements
-                darkOffice.style.display = 'none';
-                poweredOffice.style.display = 'none';
+                officeView.style.display = 'none';
+                doorHitbox.style.display = 'none';
                 btnVentLeft.style.display = 'none';
                 btnVentRight.style.display = 'none';
-                btnDoor.style.display = 'none';
-                generatorUI.style.display = 'none';
 
-                // Show Vent Elements (Dynamic pathing for left/right)
-                ventView.src = side === 'left' ? './night4-sys/office/left-vent.jpg' : './night4-sys/office/right-vent.jpg'; 
+                // Show Vent Elements
+                ventView.src = "night4-sys/office/left-vent.jpg"; // Modify if you add a right vent later
                 ventView.style.display = 'block';
                 btnReturn.style.display = 'block';
 
                 // Fade back in
                 fadeOverlay.style.opacity = '0';
-            }, 300); // Wait for CSS transition to finish
+            }, 300);
         }
 
         function returnToOffice() {
-            fadeOverlay.style.opacity = '1';
+            fadeOverlay.style.opacity = '1'; // Fade to black
 
             setTimeout(() => {
                 // Hide Vent Elements
@@ -303,20 +192,17 @@
                 btnReturn.style.display = 'none';
 
                 // Restore Office Elements
-                darkOffice.style.display = 'block';
-                poweredOffice.style.display = 'block';
+                officeView.style.display = 'block';
+                doorHitbox.style.display = 'block';
                 btnVentLeft.style.display = 'block';
                 btnVentRight.style.display = 'block';
-                btnDoor.style.display = 'block';
-                generatorUI.style.display = 'block';
 
-                // Tell the loop to start draining power again
-                isLookingInVent = false;
-
+                // Fade back in
                 fadeOverlay.style.opacity = '0';
             }, 300);
         }
 
+        // Attach Event Listeners
         btnVentLeft.addEventListener('click', () => transitionToVent('left'));
         btnVentRight.addEventListener('click', () => transitionToVent('right'));
         btnReturn.addEventListener('click', returnToOffice);
