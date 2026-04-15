@@ -21,7 +21,16 @@
             height: 100vh;
         }
 
-        /* --- Environment Images --- */
+        /* --- Panning Room Container --- */
+        #panorama-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 150vw; /* 50% wider than the screen so it can pan */
+            height: 100vh;
+            transition: transform 0.1s ease-out; /* Smooth follow delay */
+        }
+
         .room-img {
             position: absolute;
             top: 0;
@@ -32,37 +41,36 @@
             z-index: 1;
         }
 
+        /* --- Vent View (Static, doesn't pan) --- */
         #vent-view {
-            display: none; /* Hidden by default */
-        }
-
-        /* --- UI Overlay --- */
-        #ui-layer {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 10;
-            pointer-events: none; /* Allows clicks to pass through except on interactive elements */
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: 5;
+            display: none;
         }
 
+        /* --- Interactive Elements inside Panorama --- */
         .interactive {
             pointer-events: auto;
+            z-index: 10;
         }
 
-        /* --- Invisible Door Hitbox --- */
         #door-hitbox {
             position: absolute;
-            top: 20%;      
-            left: 35%;     
-            width: 30%;    
-            height: 60%;   
+            top: 20%;
+            left: 50%; /* Center of the 150vw panorama */
+            transform: translateX(-50%);
+            width: 25%;
+            height: 60%;
             cursor: pointer;
-            /* border: 2px solid red; */ /* Uncomment to see the hitbox */
+            z-index: 10;
+            /* border: 2px solid red; */ /* Uncomment to test hitbox placement */
         }
 
-        /* --- Vent Buttons --- */
         .vent-btn {
             position: absolute;
             top: 50%;
@@ -76,16 +84,14 @@
             writing-mode: vertical-rl;
             text-orientation: upright;
             letter-spacing: 5px;
+            z-index: 10;
         }
 
-        .vent-btn:hover {
-            background: rgba(100, 100, 100, 0.9);
-        }
+        .vent-btn:hover { background: rgba(100, 100, 100, 0.9); }
+        .vent-btn.left { left: 5vw; }
+        .vent-btn.right { right: 5vw; }
 
-        .vent-btn.left { left: 20px; }
-        .vent-btn.right { right: 20px; }
-
-        /* --- Return Button --- */
+        /* --- Static UI Elements (Return Button) --- */
         #btn-return {
             position: absolute;
             bottom: 50px;
@@ -97,12 +103,13 @@
             color: #fff;
             border: 2px solid #fff;
             cursor: pointer;
-            display: none; 
+            z-index: 20;
+            display: none;
         }
 
         #btn-return:hover { background: #ff0000; }
 
-        /* --- Blackout Fade Screen --- */
+        /* --- Fade Overlay --- */
         #fade-overlay {
             position: absolute;
             top: 0;
@@ -120,18 +127,17 @@
 <body>
 
     <div id="game-container">
-        <img id="office-view" class="room-img" src="../night4-sys/office/officepowered-opened.jpg" alt="Office">
-        
-        <img id="vent-view" class="room-img" src="../night4-sys/office/left-vent.jpg" alt="Vent">
-
-        <div id="ui-layer">
+        <div id="panorama-container">
+            <img id="office-view" class="room-img" src="../night4-sys/office/officepowered-opened.jpg" alt="Office">
+            
             <div id="door-hitbox" class="interactive"></div>
-
             <div id="btn-vent-left" class="vent-btn left interactive">VENTS</div>
             <div id="btn-vent-right" class="vent-btn right interactive">VENTS</div>
-
-            <button id="btn-return" class="interactive">RETURN TO OFFICE</button>
         </div>
+        
+        <img id="vent-view" src="" alt="Vent">
+
+        <button id="btn-return" class="interactive">RETURN TO OFFICE</button>
 
         <div id="fade-overlay"></div>
     </div>
@@ -139,8 +145,10 @@
     <script>
         // --- State Variables ---
         let isDoorClosed = false;
+        let isLookingInVent = false;
 
         // --- DOM Elements ---
+        const panoramaContainer = document.getElementById('panorama-container');
         const officeView = document.getElementById('office-view');
         const ventView = document.getElementById('vent-view');
         
@@ -149,6 +157,18 @@
         const btnVentRight = document.getElementById('btn-vent-right');
         const btnReturn = document.getElementById('btn-return');
         const fadeOverlay = document.getElementById('fade-overlay');
+
+        // --- 0. Panning Logic ---
+        const maxPan = window.innerWidth * 0.5; // 150vw container - 100vw screen = 50vw of extra panning room
+        
+        document.addEventListener('mousemove', (e) => {
+            // Stop panning if we are looking inside a vent
+            if (isLookingInVent) return; 
+
+            const percentage = e.clientX / window.innerWidth;
+            const panAmount = -(percentage * maxPan);
+            panoramaContainer.style.transform = `translateX(${panAmount}px)`;
+        });
 
         // --- 1. Invisible Door Toggle ---
         doorHitbox.addEventListener('click', () => {
@@ -163,16 +183,21 @@
 
         // --- 2. Vent Navigation Logic ---
         function transitionToVent(side) {
+            if (isLookingInVent) return;
+            isLookingInVent = true;
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
-                officeView.style.display = 'none';
-                doorHitbox.style.display = 'none';
-                btnVentLeft.style.display = 'none';
-                btnVentRight.style.display = 'none';
+                // Hide the entire panning room
+                panoramaContainer.style.display = 'none'; 
 
-                // Notice the ../ path here too!
-                ventView.src = "../night4-sys/office/left-vent.jpg"; 
+                // Dynamically load left or right vent image
+                if (side === 'left') {
+                    ventView.src = "../night4-sys/office/left-vent.jpg";
+                } else {
+                    ventView.src = "../night4-sys/office/right-vent.jpg";
+                }
+                
                 ventView.style.display = 'block';
                 btnReturn.style.display = 'block';
 
@@ -184,18 +209,19 @@
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
+                // Hide Vent Elements
                 ventView.style.display = 'none';
                 btnReturn.style.display = 'none';
 
-                officeView.style.display = 'block';
-                doorHitbox.style.display = 'block';
-                btnVentLeft.style.display = 'block';
-                btnVentRight.style.display = 'block';
+                // Restore Panning Room
+                panoramaContainer.style.display = 'block'; 
+                isLookingInVent = false;
 
                 fadeOverlay.style.opacity = '0';
             }, 300);
         }
 
+        // --- Event Listeners ---
         btnVentLeft.addEventListener('click', () => transitionToVent('left'));
         btnVentRight.addEventListener('click', () => transitionToVent('right'));
         btnReturn.addEventListener('click', returnToOffice);
