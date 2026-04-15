@@ -21,14 +21,31 @@
             height: 100vh;
         }
 
+        /* --- Cinematic Fade In --- */
+        #night-fade-in {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            z-index: 9999;
+            pointer-events: none;
+            animation: slowFadeIn 3s ease-in forwards;
+        }
+
+        @keyframes slowFadeIn {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+
         /* --- Panning Room Container --- */
         #panorama-container {
             position: absolute;
             top: 0;
             left: 0;
-            width: 150vw; /* 50% wider than the screen so it can pan */
+            width: 150vw; 
             height: 100vh;
-            transition: transform 0.1s ease-out; /* Smooth follow delay */
+            /* The cubic-bezier makes the pan feel heavy and smooth */
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
         }
 
         .room-img {
@@ -41,57 +58,114 @@
             z-index: 1;
         }
 
-        /* --- Vent View (Static, doesn't pan) --- */
+        /* --- Vent View (Static) --- */
         #vent-view {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
             object-fit: cover;
             z-index: 5;
             display: none;
         }
 
-        /* --- Interactive Elements inside Panorama --- */
         .interactive {
             pointer-events: auto;
             z-index: 10;
         }
 
+        /* --- Invisible Door Hitbox --- */
         #door-hitbox {
             position: absolute;
             top: 20%;
-            left: 50%; /* Center of the 150vw panorama */
+            left: 50%;
             transform: translateX(-50%);
             width: 25%;
             height: 60%;
             cursor: pointer;
             z-index: 10;
-            /* border: 2px solid red; */ /* Uncomment to test hitbox placement */
         }
 
+        /* --- Vent Buttons (Smaller, Red, Boxy) --- */
         .vent-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(50, 50, 50, 0.8);
-            border: 2px solid #aaa;
-            padding: 20px 10px;
-            font-size: 1.5rem;
+            background: rgba(80, 0, 0, 0.8); /* Dark red */
+            border: 2px solid #ff3333;       /* Harsh red border */
+            color: #fff;
+            padding: 15px 5px;               /* Thinner padding */
+            font-size: 1rem;                 /* Smaller text */
             font-weight: bold;
             cursor: pointer;
             writing-mode: vertical-rl;
             text-orientation: upright;
-            letter-spacing: 5px;
+            letter-spacing: 3px;
             z-index: 10;
+            border-radius: 0;                /* Ensures it is purely boxy */
+            transition: background 0.2s;
         }
 
-        .vent-btn:hover { background: rgba(100, 100, 100, 0.9); }
+        .vent-btn:hover { background: rgba(130, 0, 0, 0.9); }
         .vent-btn.left { left: 5vw; }
         .vent-btn.right { right: 5vw; }
 
-        /* --- Static UI Elements (Return Button) --- */
+        /* --- Hover Task Tabs (Boxy) --- */
+        .task-panel {
+            position: absolute;
+            bottom: 0;
+            width: 320px;
+            height: 280px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #444;
+            border-bottom: none;
+            border-radius: 0; /* Strictly boxy */
+            padding: 20px;
+            z-index: 30; 
+            transform: translateY(150%); 
+            transition: transform 0.3s ease 0s; 
+        }
+
+        #left-panel { left: 8vw; }
+        #right-panel { right: 8vw; }
+
+        .task-panel.is-visible { transform: translateY(85%); }
+        .task-panel.is-visible:hover {
+            transform: translateY(0);
+            transition: transform 0.3s ease 0.2s; 
+        }
+
+        .tab-label {
+            text-align: center;
+            font-size: 1.1rem;
+            color: #ccc;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+            pointer-events: none;
+        }
+
+        /* --- System Buttons --- */
+        .sys-btn {
+            background: #222;
+            color: #ccc;
+            border: 2px solid #555;
+            padding: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            text-align: center;
+            border-radius: 0; /* Strictly boxy */
+        }
+        .sys-btn:hover {
+            background: #444;
+            color: #fff;
+            border-color: #fff;
+        }
+
+        /* --- Return Button --- */
         #btn-return {
             position: absolute;
             bottom: 50px;
@@ -105,6 +179,7 @@
             cursor: pointer;
             z-index: 20;
             display: none;
+            border-radius: 0; /* Strictly boxy */
         }
 
         #btn-return:hover { background: #ff0000; }
@@ -112,10 +187,8 @@
         /* --- Fade Overlay --- */
         #fade-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             background: #000;
             z-index: 100;
             opacity: 0;
@@ -125,6 +198,8 @@
     </style>
 </head>
 <body>
+
+    <div id="night-fade-in"></div>
 
     <div id="game-container">
         <div id="panorama-container">
@@ -136,6 +211,24 @@
         </div>
         
         <img id="vent-view" src="" alt="Vent">
+
+        <div id="left-panel" class="task-panel interactive">
+            <div class="tab-label">MAINTENANCE</div>
+            <h2 style="color: #ffaa00; margin-bottom: 15px; font-size: 1.2rem;">System Repairs</h2>
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <button class="sys-btn">Repair Lights (0/5)</button>
+                <button class="sys-btn">Fix Breaker (0/1)</button>
+            </div>
+        </div>
+
+        <div id="right-panel" class="task-panel interactive">
+            <div class="tab-label">SYS-PWR</div>
+            <h2 style="color: #00ff00; margin-bottom: 10px; font-size: 1.2rem;">Power Controls</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button class="sys-btn" style="border-color: #ffbb00; color: #ffbb00;">Generator</button>
+                <button class="sys-btn">Motion Sensor</button>
+            </div>
+        </div>
 
         <button id="btn-return" class="interactive">RETURN TO OFFICE</button>
 
@@ -158,16 +251,33 @@
         const btnReturn = document.getElementById('btn-return');
         const fadeOverlay = document.getElementById('fade-overlay');
 
+        const leftPanel = document.getElementById('left-panel');
+        const rightPanel = document.getElementById('right-panel');
+
         // --- 0. Panning Logic ---
-        const maxPan = window.innerWidth * 0.5; // 150vw container - 100vw screen = 50vw of extra panning room
+        const maxPan = window.innerWidth * 0.5; 
         
         document.addEventListener('mousemove', (e) => {
-            // Stop panning if we are looking inside a vent
             if (isLookingInVent) return; 
 
             const percentage = e.clientX / window.innerWidth;
+            
+            // Handle Camera Pan
             const panAmount = -(percentage * maxPan);
             panoramaContainer.style.transform = `translateX(${panAmount}px)`;
+
+            // Handle UI Panel Triggers
+            if (percentage < 0.3) {
+                leftPanel.classList.add('is-visible');
+            } else {
+                leftPanel.classList.remove('is-visible');
+            }
+
+            if (percentage > 0.7) {
+                rightPanel.classList.add('is-visible');
+            } else {
+                rightPanel.classList.remove('is-visible');
+            }
         });
 
         // --- 1. Invisible Door Toggle ---
@@ -188,10 +298,10 @@
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
-                // Hide the entire panning room
                 panoramaContainer.style.display = 'none'; 
+                leftPanel.style.display = 'none';
+                rightPanel.style.display = 'none';
 
-                // Dynamically load left or right vent image
                 if (side === 'left') {
                     ventView.src = "../night4-sys/office/left-vent.jpg";
                 } else {
@@ -209,12 +319,13 @@
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
-                // Hide Vent Elements
                 ventView.style.display = 'none';
                 btnReturn.style.display = 'none';
 
-                // Restore Panning Room
                 panoramaContainer.style.display = 'block'; 
+                leftPanel.style.display = 'block';
+                rightPanel.style.display = 'block';
+                
                 isLookingInVent = false;
 
                 fadeOverlay.style.opacity = '0';
