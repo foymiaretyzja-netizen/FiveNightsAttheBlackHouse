@@ -54,13 +54,12 @@
         /* --- Invisible Door Hitbox --- */
         #door-hitbox {
             position: absolute;
-            top: 20%;      /* Starts 20% down from the top */
-            left: 35%;     /* Starts 35% from the left */
-            width: 30%;    /* Covers the middle 30% of the screen horizontally */
-            height: 60%;   /* Covers 60% of the screen vertically */
+            top: 20%;      
+            left: 35%;     
+            width: 30%;    
+            height: 60%;   
             cursor: pointer;
-            /* Uncomment the line below if you want to see a red box to test its placement */
-            /* border: 2px solid red; */
+            /* border: 2px solid red; */ /* Uncomment to see the hitbox */
         }
 
         /* --- Vent Buttons --- */
@@ -98,7 +97,7 @@
             color: #fff;
             border: 2px solid #fff;
             cursor: pointer;
-            display: none; /* Hidden by default */
+            display: none; 
         }
 
         #btn-return:hover { background: #ff0000; }
@@ -121,9 +120,9 @@
 <body>
 
     <div id="game-container">
-        <img id="office-view" class="room-img" src="./night4-sys/office/officepowered-opened.jpg" alt="Office">
+        <img id="office-view" class="room-img" src="../night4-sys/office/officepowered-opened.jpg" alt="Office">
         
-        <img id="vent-view" class="room-img" src="night4-sys/office/left-vent.jpg" alt="Vent">
+        <img id="vent-view" class="room-img" src="../night4-sys/office/left-vent.jpg" alt="Vent">
 
         <div id="ui-layer">
             <div id="door-hitbox" class="interactive"></div>
@@ -156,53 +155,47 @@
             isDoorClosed = !isDoorClosed;
             
             if (isDoorClosed) {
-                officeView.src = "night4-sys/office/officepowered-closed.jpg";
+                officeView.src = "../night4-sys/office/officepowered-closed.jpg";
             } else {
-                officeView.src = "night4-sys/office/officepowered-opened.jpg";
+                officeView.src = "../night4-sys/office/officepowered-opened.jpg";
             }
         });
 
         // --- 2. Vent Navigation Logic ---
         function transitionToVent(side) {
-            fadeOverlay.style.opacity = '1'; // Fade to black
+            fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
-                // Hide Office Elements
                 officeView.style.display = 'none';
                 doorHitbox.style.display = 'none';
                 btnVentLeft.style.display = 'none';
                 btnVentRight.style.display = 'none';
 
-                // Show Vent Elements
-                ventView.src = "night4-sys/office/left-vent.jpg"; // Modify if you add a right vent later
+                // Notice the ../ path here too!
+                ventView.src = "../night4-sys/office/left-vent.jpg"; 
                 ventView.style.display = 'block';
                 btnReturn.style.display = 'block';
 
-                // Fade back in
                 fadeOverlay.style.opacity = '0';
             }, 300);
         }
 
         function returnToOffice() {
-            fadeOverlay.style.opacity = '1'; // Fade to black
+            fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
-                // Hide Vent Elements
                 ventView.style.display = 'none';
                 btnReturn.style.display = 'none';
 
-                // Restore Office Elements
                 officeView.style.display = 'block';
                 doorHitbox.style.display = 'block';
                 btnVentLeft.style.display = 'block';
                 btnVentRight.style.display = 'block';
 
-                // Fade back in
                 fadeOverlay.style.opacity = '0';
             }, 300);
         }
 
-        // Attach Event Listeners
         btnVentLeft.addEventListener('click', () => transitionToVent('left'));
         btnVentRight.addEventListener('click', () => transitionToVent('right'));
         btnReturn.addEventListener('click', returnToOffice);
