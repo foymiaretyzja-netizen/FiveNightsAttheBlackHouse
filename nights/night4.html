@@ -42,8 +42,8 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 150vw; 
-            height: 100vh;
+            width: 150vw; /* Allows X panning */
+            height: 120vh; /* Allows Y panning */
             transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); 
         }
 
@@ -57,14 +57,16 @@
             z-index: 1;
         }
 
-        /* --- Vent View (Static) --- */
+        /* --- Vent View (Now with panning padding) --- */
         #vent-view {
             position: absolute;
             top: 0; left: 0;
-            width: 100vw; height: 100vh;
+            width: 110vw; /* Slightly oversized for panning */
+            height: 110vh; 
             object-fit: cover;
             z-index: 5;
             display: none;
+            transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); 
         }
 
         .interactive {
@@ -84,7 +86,7 @@
             z-index: 10;
         }
 
-        /* --- Vent Buttons (Smaller, Red, Boxy) --- */
+        /* --- Vent Buttons (Screen-fixed, Fade in) --- */
         .vent-btn {
             position: absolute;
             top: 50%;
@@ -99,14 +101,21 @@
             writing-mode: vertical-rl;
             text-orientation: upright;
             letter-spacing: 3px;
-            z-index: 10;
+            z-index: 25; /* Above room, below task panels */
             border-radius: 0;                
-            transition: background 0.2s;
+            opacity: 0; /* Hidden by default */
+            pointer-events: none; /* Unclickable when hidden */
+            transition: opacity 0.3s ease, background 0.2s;
+        }
+
+        .vent-btn.is-visible {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .vent-btn:hover { background: rgba(130, 0, 0, 0.9); }
-        .vent-btn.left { left: 5vw; }
-        .vent-btn.right { right: 5vw; }
+        .vent-btn.left { left: 0; } /* Snapped to left edge */
+        .vent-btn.right { right: 0; } /* Snapped to right edge */
 
         /* --- Hover Task Tabs (Boxy) --- */
         .task-panel {
@@ -176,7 +185,7 @@
             color: #fff;
             border: 2px solid #fff;
             cursor: pointer;
-            z-index: 20;
+            z-index: 30;
             display: none;
             border-radius: 0; 
         }
@@ -203,12 +212,12 @@
     <div id="game-container">
         <div id="panorama-container">
             <img id="office-view" class="room-img" src="../night4-sys/office/officepowered-opened.jpg" alt="Office">
-            
             <div id="door-hitbox" class="interactive"></div>
-            <div id="btn-vent-left" class="vent-btn left interactive">VENTS</div>
-            <div id="btn-vent-right" class="vent-btn right interactive">VENTS</div>
         </div>
         
+        <div id="btn-vent-left" class="vent-btn left interactive">VENTS</div>
+        <div id="btn-vent-right" class="vent-btn right interactive">VENTS</div>
+
         <img id="vent-view" src="" alt="Vent">
 
         <div id="left-panel" class="task-panel interactive">
@@ -269,29 +278,65 @@
             sound.play().catch(e => console.log("Audio block:", e));
         }
 
-        // --- 0. Panning Logic ---
-        const maxPan = window.innerWidth * 0.5; 
+        // --- 0. Panning Logic (X and Y with Smooth Edge Deceleration) ---
+        // Panorama bounds
+        const maxPanX = window.innerWidth * 0.5;  // 150vw - 100vw = 50vw
+        const maxPanY = window.innerHeight * 0.2; // 120vh - 100vh = 20vh
         
+        // Vent bounds
+        const ventMaxPanX = window.innerWidth * 0.1;  // 110vw - 100vw = 10vw
+        const ventMaxPanY = window.innerHeight * 0.1; // 110vh - 100vh = 10vh
+
+        // Smoothstep function to decelerate near edges
+        function smoothstep(value) {
+            return value * value * (3 - 2 * value);
+        }
+
         document.addEventListener('mousemove', (e) => {
-            if (isLookingInVent) return; 
+            // Get raw mouse percentage (0.0 to 1.0)
+            let rawPercentX = e.clientX / window.innerWidth;
+            let rawPercentY = e.clientY / window.innerHeight;
 
-            const percentage = e.clientX / window.innerWidth;
-            
-            // Handle Camera Pan
-            const panAmount = -(percentage * maxPan);
-            panoramaContainer.style.transform = `translateX(${panAmount}px)`;
+            // Apply smooth curve so it doesn't hit the edge abruptly
+            let smoothPercentX = smoothstep(rawPercentX);
+            let smoothPercentY = smoothstep(rawPercentY);
 
-            // Handle UI Panel Triggers
-            if (percentage < 0.3) {
-                leftPanel.classList.add('is-visible');
+            if (isLookingInVent) {
+                // Subtle panning for the vent view
+                const vPanX = -(smoothPercentX * ventMaxPanX);
+                const vPanY = -(smoothPercentY * ventMaxPanY);
+                ventView.style.transform = `translate(${vPanX}px, ${vPanY}px)`;
             } else {
-                leftPanel.classList.remove('is-visible');
-            }
+                // Full room panning
+                const pPanX = -(smoothPercentX * maxPanX);
+                const pPanY = -(smoothPercentY * maxPanY);
+                panoramaContainer.style.transform = `translate(${pPanX}px, ${pPanY}px)`;
 
-            if (percentage > 0.7) {
-                rightPanel.classList.add('is-visible');
-            } else {
-                rightPanel.classList.remove('is-visible');
+                // Handle UI Task Panel Triggers
+                if (rawPercentX < 0.3) {
+                    leftPanel.classList.add('is-visible');
+                } else {
+                    leftPanel.classList.remove('is-visible');
+                }
+
+                if (rawPercentX > 0.7) {
+                    rightPanel.classList.add('is-visible');
+                } else {
+                    rightPanel.classList.remove('is-visible');
+                }
+
+                // Handle Vent Button Fade Ins
+                if (rawPercentX < 0.15) {
+                    btnVentLeft.classList.add('is-visible');
+                } else {
+                    btnVentLeft.classList.remove('is-visible');
+                }
+
+                if (rawPercentX > 0.85) {
+                    btnVentRight.classList.add('is-visible');
+                } else {
+                    btnVentRight.classList.remove('is-visible');
+                }
             }
         });
 
@@ -315,16 +360,22 @@
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
+                // Hide office elements
                 panoramaContainer.style.display = 'none'; 
                 leftPanel.style.display = 'none';
                 rightPanel.style.display = 'none';
+                btnVentLeft.style.display = 'none';
+                btnVentRight.style.display = 'none';
 
+                // Load vent view
                 if (side === 'left') {
                     ventView.src = "../night4-sys/office/left-vent.jpg";
                 } else {
                     ventView.src = "../night4-sys/office/right-vent.jpg";
                 }
                 
+                // Reset transform slightly to prevent jarring jumps, it will catch up on next mousemove
+                ventView.style.transform = `translate(-5vw, -5vh)`; 
                 ventView.style.display = 'block';
                 btnReturn.style.display = 'block';
 
@@ -336,13 +387,21 @@
             fadeOverlay.style.opacity = '1'; 
 
             setTimeout(() => {
+                // Hide vent elements
                 ventView.style.display = 'none';
                 btnReturn.style.display = 'none';
 
+                // Show office elements
                 panoramaContainer.style.display = 'block'; 
                 leftPanel.style.display = 'block';
                 rightPanel.style.display = 'block';
+                btnVentLeft.style.display = 'block';
+                btnVentRight.style.display = 'block';
                 
+                // Force vent buttons to recount visibility
+                btnVentLeft.classList.remove('is-visible');
+                btnVentRight.classList.remove('is-visible');
+
                 isLookingInVent = false;
 
                 fadeOverlay.style.opacity = '0';
